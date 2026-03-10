@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinco Energy — DSU Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #ffffff; color: #1f2328; }
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  #app { display: flex; height: 100vh; }
+  #sidebar { width: 380px; min-width: 380px; background: #f6f8fa; border-right: 1px solid #d1d9e0;
+             display: flex; flex-direction: column; overflow: hidden; z-index: 1000; }
+  #map { flex: 1; background: #ffffff; }
+
+  /* ── Sidebar Header ─────────────────────────────────────── */
+  .sidebar-header { padding: 16px 20px; border-bottom: 1px solid #d1d9e0; }
+  .sidebar-header h1 { font-size: 16px; font-weight: 600; color: #1f2328; margin-bottom: 2px; }
+  .sidebar-header p { font-size: 11px; color: #656d76; }
+
+  /* ── Filters ────────────────────────────────────────────── */
+  .filters { padding: 12px 20px; border-bottom: 1px solid #d1d9e0; display: flex; flex-direction: column; gap: 8px; }
+  .filter-row { display: flex; gap: 8px; align-items: center; }
+  .filter-row label { font-size: 11px; color: #656d76; min-width: 58px; }
+  .filter-row select, .filter-row input { flex: 1; background: #ffffff; border: 1px solid #d1d9e0; color: #1f2328;
+    padding: 5px 8px; border-radius: 6px; font-size: 12px; outline: none; }
+  .filter-row select:focus, .filter-row input:focus { border-color: #0969da; }
+
+  /* ── Stats Bar ──────────────────────────────────────────── */
+  .stats-bar { padding: 10px 20px; border-bottom: 1px solid #d1d9e0; display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat { text-align: center; flex: 1; min-width: 70px; }
+  .stat .val { font-size: 16px; font-weight: 700; color: #0969da; }
+  .stat .lbl { font-size: 9px; color: #656d76; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── DSU List ───────────────────────────────────────────── */
+  .dsu-list { flex: 1; overflow-y: auto; }
+  .dsu-list::-webkit-scrollbar { width: 6px; }
+  .dsu-list::-webkit-scrollbar-thumb { background: #d1d9e0; border-radius: 3px; }
+  .dsu-item { padding: 12px 20px; border-bottom: 1px solid #e8ecf0; cursor: pointer; transition: background 0.15s; }
+  .dsu-item:hover { background: #eef1f5; }
+  .dsu-item.active { background: #ddf4ff; border-left: 3px solid #0969da; }
+  .dsu-item .unit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .dsu-item .unit-id { font-size: 14px; font-weight: 600; color: #1f2328; }
+  .dsu-item .unit-type { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .type-drillable { background: rgba(26, 127, 55, 0.1); color: #1a7f37; }
+  .type-potential { background: rgba(191, 135, 0, 0.1); color: #9a6700; }
+  .type-nonop { background: rgba(101, 109, 118, 0.1); color: #656d76; }
+  .dsu-item .unit-meta { display: flex; gap: 14px; font-size: 11px; color: #656d76; }
+  .dsu-item .unit-meta span { white-space: nowrap; }
+  .dsu-item .unit-meta .val { color: #1f2328; font-weight: 500; }
+  .dsu-item .operator { font-size: 11px; color: #656d76; margin-top: 3px; }
+
+  /* ── Detail Panel (overlay) ─────────────────────────────── */
+  #detail-panel { display: none; position: absolute; top: 0; left: 380px; width: 360px; height: 100%;
+    background: #f6f8fa; border-right: 1px solid #d1d9e0; z-index: 999; overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.1); }
+  #detail-panel.open { display: block; }
+  .detail-header { padding: 16px 20px; border-bottom: 1px solid #d1d9e0; display: flex; justify-content: space-between; align-items: center; }
+  .detail-header h2 { font-size: 18px; color: #1f2328; }
+  .detail-close { background: none; border: none; color: #656d76; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+  .detail-close:hover { color: #1f2328; }
+  .detail-body { padding: 20px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #656d76;
+    margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e8ecf0; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-field .label { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-field .value { font-size: 15px; font-weight: 600; color: #1f2328; margin-top: 2px; }
+  .detail-field .value.highlight { color: #0969da; }
+  .detail-field.full { grid-column: 1 / -1; }
+  .str-list { list-style: none; padding: 0; }
+  .str-list li { padding: 6px 10px; background: #ffffff; border: 1px solid #e8ecf0; border-radius: 6px; margin-bottom: 4px;
+    font-size: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; color: #1f2328; }
+  .nma-bar-container { margin-top: 6px; }
+  .nma-bar { height: 6px; border-radius: 3px; background: #e8ecf0; overflow: hidden; }
+  .nma-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  /* ── Legend ──────────────────────────────────────────────── */
+  .legend { padding: 12px 20px; border-top: 1px solid #d1d9e0; }
+  .legend h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #656d76; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; margin-bottom: 4px; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
+
+  /* ── Leaflet Overrides ──────────────────────────────────── */
+  .leaflet-popup-content-wrapper { background: #ffffff; color: #1f2328; border-radius: 8px;
+    border: 1px solid #d1d9e0; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .leaflet-popup-tip { background: #ffffff; }
+  .leaflet-popup-content { margin: 12px 16px; font-size: 12px; line-height: 1.5; }
+  .leaflet-popup-content b { color: #1f2328; }
+  .leaflet-control-zoom a { background: #ffffff !important; color: #1f2328 !important; border-color: #d1d9e0 !important; }
+  .leaflet-control-zoom a:hover { background: #f6f8fa !important; }
+  .leaflet-control-attribution { background: rgba(255,255,255,0.85) !important; color: #656d76 !important; }
+  .leaflet-control-attribution a { color: #0969da !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <h1>Cinco Energy &mdash; DSU Map</h1>
+      <p>Interactive Acreage Position by Drilling Spacing Unit</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-row">
+        <label>Type</label>
+        <select id="filter-type">
+          <option value="all">All Unit Types</option>
+          <option value="Drillable">Drillable</option>
+          <option value="Potential Drillable">Potential Drillable</option>
+          <option value="Non-Op">Non-Op</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label>Operator</label>
+        <select id="filter-operator"><option value="all">All Operators</option></select>
+      </div>
+      <div class="filter-row">
+        <label>Search</label>
+        <input id="filter-search" type="text" placeholder="Unit No., section, operator...">
+      </div>
+    </div>
+
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat"><div class="val" id="stat-units">0</div><div class="lbl">Units</div></div>
+      <div class="stat"><div class="val" id="stat-nma">0</div><div class="lbl">Net Acres</div></div>
+      <div class="stat"><div class="val" id="stat-wi">0</div><div class="lbl">Avg W.I.</div></div>
+      <div class="stat"><div class="val" id="stat-nri">0</div><div class="lbl">Avg NRI</div></div>
+    </div>
+
+    <div class="dsu-list" id="dsu-list"></div>
+
+    <div class="legend">
+      <h4>Unit Type</h4>
+      <div class="legend-item"><div class="legend-swatch" style="background:#1a7f37;"></div> Drillable</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#bf8700;"></div> Potential Drillable</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#8b949e;"></div> Non-Op</div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div id="detail-panel">
+    <div class="detail-header">
+      <h2 id="detail-title">Unit</h2>
+      <button class="detail-close" onclick="closeDetail()">&times;</button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// DSU Data (from Google Sheet: Aggregate Inventory - Oklahoma)
+// ═══════════════════════════════════════════════════════════════════════
+// Section-level NMA lookup: key = "section-townshipN-rangeW" → NMA
+const SECTION_NMA = {
+  "7-12N-17W":112.6,
+  "4-12N-18W":66.1,"30-12N-18W":10.8,"33-12N-18W":90.0,
+  "3-12N-19W":322.2,"4-12N-19W":329.7,"9-12N-19W":304.7,"10-12N-19W":336.3,
+  "11-12N-19W":370.0,"15-12N-19W":320.0,"26-12N-19W":40.0,"27-12N-19W":26.3,
+  "30-12N-19W":529.4,"31-12N-19W":96.9,"32-12N-19W":27.7,"33-12N-19W":13.8,
+  "34-12N-19W":170.9,"35-12N-19W":198.8,
+  "6-13N-17W":205.4,"7-13N-17W":304.9,
+  "3-13N-18W":18.7,"19-13N-18W":483.8,"29-13N-18W":40.0,"30-13N-18W":322.7,
+  "31-13N-18W":162.8,"33-13N-18W":124.8,
+  "2-13N-19W":40.7,"3-13N-19W":14.6,"6-13N-19W":20.4,"9-13N-19W":10.0,
+  "10-13N-19W":11.3,"14-13N-19W":354.1,"15-13N-19W":26.3,"16-13N-19W":72.2,
+  "20-13N-19W":199.2,"21-13N-19W":123.7,"22-13N-19W":312.6,"23-13N-19W":374.6,
+  "24-13N-19W":308.2,"26-13N-19W":106.5,"27-13N-19W":362.3,"33-13N-19W":90.3,
+  "34-13N-19W":105.7,"36-13N-19W":240.0,
+  "20-14N-17W":406.7,"29-14N-17W":153.5,
+  "13-14N-18W":18.5,"15-14N-18W":199.4,"22-14N-18W":181.1,"23-14N-18W":61.9,"24-14N-18W":32.6,
+  "15-15N-17W":480.0,"20-15N-17W":325.0,"22-15N-17W":124.4,
+  "30-15N-18W":10.0,
+  "11-15N-19W":353.7,"13-15N-19W":253.7,"14-15N-19W":40.0,"24-15N-19W":142.8,
+  "25-15N-19W":320.9,"30-15N-19W":29.7,"32-15N-19W":83.8,
+  "5-13N-23W":110.4,
+  "14-14N-23W":68.4,"26-14N-23W":22.7,"28-14N-23W":66.1,"31-14N-23W":10.8,
+  "32-14N-23W":19.2,"33-14N-23W":18.7,"34-14N-23W":4.0,"35-14N-23W":156.7,
+  "2-15N-24W":15.6,"23-15N-24W":9.3,"27-15N-24W":39.8,"34-15N-24W":0.1,
+  "3-11N-19W":455.6,"4-11N-19W":128.3,"5-11N-19W":246.2,"7-11N-19W":30.0,
+  "8-11N-19W":250.4,"9-11N-19W":205.5,"10-11N-19W":393.8,"16-11N-19W":440.2,"17-11N-19W":86.0
+};
+const DSU_DATA = [
+  { unit:"1077", nma:969.3, wi:0.50483, nri:0.39902, operator:"OSTRICH", type:"Drillable", north:"19-13N-18W", middle:"30-13N-18W", south:"31-13N-18W", unitSize:1920 },
+  { unit:"1065", nma:849.3, wi:0.66352, nri:0.52634, operator:"OSTRICH", type:"Drillable", north:"3-11N-19W", middle:"", south:"10-11N-19W", unitSize:1280 },
+  { unit:"851", nma:780.6, wi:0.40655, nri:0.31932, operator:"OSTRICH", type:"Drillable", north:"22-13N-19W", middle:"27-13N-19W", south:"34-13N-19W", unitSize:1920 },
+  { unit:"21", nma:728.7, wi:0.56933, nri:0.45349, operator:"OSTRICH", type:"Drillable", north:"14-13N-19W", middle:"", south:"23-13N-19W", unitSize:1280 },
+  { unit:"A14", nma:717.4, wi:0.37363, nri:0.29440, operator:"OSTRICH", type:"Drillable", north:"13-15N-19W", middle:"24-15N-19W", south:"25-15N-19W", unitSize:1920 },
+  { unit:"852", nma:658.6, wi:0.51451, nri:0.40160, operator:"OSTRICH", type:"Drillable", north:"3-12N-19W", middle:"", south:"10-12N-19W", unitSize:1280 },
+  { unit:"1066", nma:645.7, wi:0.50445, nri:0.40020, operator:"OSTRICH", type:"Drillable", north:"9-11N-19W", middle:"", south:"16-11N-19W", unitSize:1280 },
+  { unit:"1072", nma:634.5, wi:0.50775, nri:0.39662, operator:"OSTRICH", type:"Drillable", north:"4-12N-19W", middle:"", south:"9-12N-19W", unitSize:1249.62 },
+  { unit:"1075", nma:626.3, wi:0.48929, nri:0.38717, operator:"OSTRICH", type:"Drillable", north:"30-12N-19W", middle:"", south:"31-12N-19W", unitSize:1280 },
+  { unit:"902", nma:604.4, wi:0.47222, nri:0.37778, operator:"OSTRICH", type:"Drillable", north:"15-15N-17W", middle:"", south:"22-15N-17W", unitSize:1280 },
+  { unit:"1080", nma:560.2, wi:0.43768, nri:0.34964, operator:"OSTRICH", type:"Drillable", north:"20-14N-17W", middle:"", south:"29-14N-17W", unitSize:1280 },
+  { unit:"651", nma:510.3, wi:0.39866, nri:0.31494, operator:"OSTRICH", type:"Drillable", north:"6-13N-17W", middle:"", south:"7-13N-17W", unitSize:1280 },
+  { unit:"A26", nma:380.6, wi:0.29730, nri:0.23849, operator:"OSTRICH", type:"Drillable", north:"15-14N-18W", middle:"", south:"22-14N-18W", unitSize:1280 },
+  { unit:"1070", nma:370.0, wi:0.28906, nri:0.22836, operator:"OSTRICH", type:"Potential Drillable", north:"2-12N-19W", middle:"", south:"11-12N-19W", unitSize:1280 },
+  { unit:"648", nma:353.7, wi:0.27631, nri:0.22235, operator:"OSTRICH", type:"Potential Drillable", north:"2-15N-19W", middle:"", south:"11-15N-19W", unitSize:1280 },
+  { unit:"1067", nma:336.4, wi:0.26279, nri:0.20890, operator:"OSTRICH", type:"Potential Drillable", north:"8-11N-19W", middle:"", south:"17-11N-19W", unitSize:1280 },
+  { unit:"1085", nma:325.0, wi:0.25391, nri:0.20133, operator:"OSTRICH", type:"Potential Drillable", north:"17-15N-17W", middle:"", south:"20-15N-17W", unitSize:1280 },
+  { unit:"1076", nma:320.0, wi:0.25000, nri:0.19750, operator:"OSTRICH", type:"Potential Drillable", north:"15-12N-19W", middle:"", south:"22-12N-19W", unitSize:1280 },
+  { unit:"640", nma:308.2, wi:0.24080, nri:0.19160, operator:"UNKNOWN", type:"Non-Op", north:"13-13N-19W", middle:"", south:"24-13N-19W", unitSize:1280 },
+  { unit:"4", nma:273.9, wi:0.21396, nri:0.17038, operator:"CRAWLEY", type:"Potential Drillable", north:"32-12N-19W", middle:"", south:"5-11N-19W", unitSize:1280 },
+  { unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Potential Drillable", north:"25-13N-19W", middle:"", south:"36-13N-19W", unitSize:1280 },
+  { unit:"11", nma:238.8, wi:0.18652, nri:0.14744, operator:"CRAWLEY", type:"Non-Op", north:"26-12N-19W", middle:"", south:"35-12N-19W", unitSize:1280 },
+  { unit:"1078", nma:199.2, wi:0.15565, nri:0.12587, operator:"", type:"Non-Op", north:"17-13N-19W", middle:"", south:"20-13N-19W", unitSize:1280 },
+  { unit:"12", nma:197.1, wi:0.15401, nri:0.12189, operator:"CRAWLEY", type:"Non-Op", north:"27-12N-19W", middle:"", south:"34-12N-19W", unitSize:1280 },
+  { unit:"53", nma:195.9, wi:0.15304, nri:0.11965, operator:"", type:"Non-Op", north:"16-13N-19W", middle:"", south:"21-13N-19W", unitSize:1280 },
+  { unit:"1117", nma:156.7, wi:0.12239, nri:0.09358, operator:"CRAWLEY", type:"Non-Op", north:"35-14N-23W", middle:"", south:"2-13N-23W", unitSize:1280 },
+  { unit:"5", nma:142.1, wi:0.11102, nri:0.08807, operator:"CRAWLEY", type:"Non-Op", north:"33-12N-19W", middle:"", south:"4-11N-19W", unitSize:1280 },
+  { unit:"A31", nma:129.6, wi:0.10127, nri:0.08054, operator:"MEWBOURNE", type:"Non-Op", north:"32-14N-23W", middle:"", south:"5-13N-23W", unitSize:1280 },
+  { unit:"A36", nma:124.8, wi:0.09747, nri:0.07814, operator:"", type:"Non-Op", north:"28-13N-18W", middle:"", south:"33-13N-18W", unitSize:1280 },
+  { unit:"1334", nma:112.6, wi:0.05866, nri:0.04634, operator:"", type:"Non-Op", north:"6-12N-17W", middle:"7-12N-17W", south:"18-12N-17W", unitSize:1920 },
+  { unit:"573", nma:106.5, wi:0.08317, nri:0.06748, operator:"UNKNOWN", type:"Non-Op", north:"26-13N-19W", middle:"", south:"35-13N-19W", unitSize:1280 },
+  { unit:"A32", nma:91.1, wi:0.04743, nri:0.03742, operator:"MEWBOURNE", type:"Non-Op", north:"14-14N-23W", middle:"23-14N-23W", south:"26-14N-23W", unitSize:1920 },
+  { unit:"627", nma:90.3, wi:0.07053, nri:0.05660, operator:"UNKNOWN", type:"Non-Op", north:"28-13N-19W", middle:"", south:"33-13N-19W", unitSize:1280 },
+  { unit:"A35", nma:90.0, wi:0.07031, nri:0.05273, operator:"", type:"Non-Op", north:"28-12N-18W", middle:"", south:"33-12N-18W", unitSize:1280 },
+  { unit:"45", nma:84.8, wi:0.06628, nri:0.05271, operator:"CRAWLEY", type:"Non-Op", north:"28-14N-23W", middle:"", south:"33-14N-23W", unitSize:1280 },
+  { unit:"1145", nma:83.8, wi:0.06547, nri:0.05319, operator:"DUNCAN", type:"Non-Op", north:"32-15N-19W", middle:"", south:"5-14N-19W", unitSize:1280 },
+  { unit:"A34", nma:66.1, wi:0.05162, nri:0.04188, operator:"", type:"Non-Op", north:"4-12N-18W", middle:"", south:"9-12N-18W", unitSize:1280 },
+  { unit:"1083", nma:61.9, wi:0.04836, nri:0.03888, operator:"OSTRICH", type:"Potential Drillable", north:"14-14N-18W", middle:"", south:"23-14N-18W", unitSize:1280 },
+  { unit:"A15", nma:51.1, wi:0.03995, nri:0.03196, operator:"OSTRICH", type:"Potential Drillable", north:"13-14N-18W", middle:"", south:"24-14N-18W", unitSize:1280 },
+  { unit:"1308", nma:40.7, wi:0.03181, nri:0.02584, operator:"NADEL & GUSSMAN", type:"Non-Op", north:"2-13N-19W", middle:"", south:"11-13N-19W", unitSize:1280 },
+  { unit:"A38", nma:40.0, wi:0.03125, nri:0.02501, operator:"", type:"Non-Op", north:"29-13N-18W", middle:"", south:"32-13N-18W", unitSize:1280 },
+  { unit:"19", nma:40.0, wi:0.03125, nri:0.02500, operator:"ROCKIES", type:"Non-Op", north:"14-15N-19W", middle:"", south:"23-15N-19W", unitSize:1280 },
+  { unit:"60", nma:39.9, wi:0.03118, nri:0.02457, operator:"CRAWLEY", type:"Non-Op", north:"27-15N-24W", middle:"", south:"34-15N-24W", unitSize:1280 },
+  { unit:"413", nma:37.5, wi:0.02930, nri:0.02300, operator:"NADEL & GUSSMAN", type:"Non-Op", north:"10-13N-19W", middle:"", south:"15-13N-19W", unitSize:1280 },
+  { unit:"A33", nma:30.0, wi:0.02344, nri:0.01758, operator:"", type:"Non-Op", north:"6-11N-19W", middle:"", south:"7-11N-19W", unitSize:1280 },
+  { unit:"587", nma:29.7, wi:0.02317, nri:0.01883, operator:"MEWBOURNE", type:"Non-Op", north:"30-15N-19W", middle:"", south:"31-15N-19W", unitSize:1280 },
+  { unit:"1195", nma:20.4, wi:0.01596, nri:0.01197, operator:"NADEL & GUSSMAN", type:"Non-Op", north:"6-13N-19W", middle:"", south:"7-13N-19W", unitSize:1280 },
+  { unit:"649", nma:18.7, wi:0.01459, nri:0.01153, operator:"DUNCAN", type:"Non-Op", north:"34-14N-18W", middle:"", south:"3-13N-18W", unitSize:1280 },
+  { unit:"234", nma:15.6, wi:0.01218, nri:0.00965, operator:"SANDRIDGE", type:"Non-Op", north:"35-16N-24W", middle:"", south:"2-15N-24W", unitSize:1280 },
+  { unit:"A37", nma:14.6, wi:0.01141, nri:0.00856, operator:"", type:"Non-Op", north:"3-13N-19W", middle:"", south:"34-14N-19W", unitSize:1280 },
+  { unit:"27", nma:10.8, wi:0.00845, nri:0.00633, operator:"CRAWLEY", type:"Non-Op", north:"31-14N-23W", middle:"", south:"6-13N-23W", unitSize:1280 },
+  { unit:"57", nma:10.8, wi:0.00841, nri:0.00647, operator:"CRAWLEY", type:"Non-Op", north:"19-12N-18W", middle:"", south:"30-12N-18W", unitSize:1280 },
+  { unit:"1333", nma:10.0, wi:0.00781, nri:0.00625, operator:"", type:"Non-Op", north:"19-15N-18W", middle:"", south:"30-15N-18W", unitSize:1280 },
+  { unit:"440", nma:10.0, wi:0.00781, nri:0.00625, operator:"NADEL & GUSSMAN", type:"Non-Op", north:"4-13N-19W", middle:"", south:"9-13N-19W", unitSize:1280 },
+  { unit:"366", nma:9.3, wi:0.00729, nri:0.00547, operator:"CITIZEN", type:"Non-Op", north:"14-15N-24W", middle:"", south:"23-15N-24W", unitSize:1280 },
+  { unit:"30", nma:4.0, wi:0.00314, nri:0.00237, operator:"CRAWLEY", type:"Non-Op", north:"34-14N-23W", middle:"", south:"3-13N-23W", unitSize:1280 },
+];
+
+// ═══════════════════════════════════════════════════════════════════════
+// PLSS Grid → Lat/Lng Converter (Indian Meridian, Oklahoma)
+// ═══════════════════════════════════════════════════════════════════════
+const INDIAN_MERIDIAN = { lat: 34.50299, lng: -97.24706 };
+const MI_PER_DEG_LAT = 69.0;
+const TWP_MILES = 6;
+const SEC_MILES = 1;
+
+function parseSectionTownshipRange(str) {
+  if (!str) return null;
+  const m = str.match(/^(\d+)-(\d+)([NS])-(\d+)([EW])$/);
+  if (!m) return null;
+  return { section: +m[1], township: +m[2], twpDir: m[3], range: +m[4], rngDir: m[5] };
+}
+
+function sectionToRowCol(sec) {
+  const row = Math.floor((sec - 1) / 6);
+  const posInRow = (sec - 1) % 6;
+  const col = (row % 2 === 0) ? (5 - posInRow) : posInRow;
+  return { row, col };
+}
+
+function sectionBounds(str) {
+  const p = parseSectionTownshipRange(str);
+  if (!p) return null;
+
+  const midLat = INDIAN_MERIDIAN.lat + p.township * TWP_MILES / MI_PER_DEG_LAT;
+  const miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
+
+  // Township boundaries
+  const twpSouthLat = INDIAN_MERIDIAN.lat + (p.township - 1) * TWP_MILES / MI_PER_DEG_LAT;
+  const twpWestLng  = INDIAN_MERIDIAN.lng - p.range * TWP_MILES / miPerDegLng;
+
+  const { row, col } = sectionToRowCol(p.section);
+
+  // Section bounds (row 0 = northernmost = top of township)
+  const secNorthLat = twpSouthLat + (6 - row) * SEC_MILES / MI_PER_DEG_LAT;
+  const secSouthLat = twpSouthLat + (5 - row) * SEC_MILES / MI_PER_DEG_LAT;
+  const secWestLng  = twpWestLng + col * SEC_MILES / miPerDegLng;
+  const secEastLng  = twpWestLng + (col + 1) * SEC_MILES / miPerDegLng;
+
+  return { north: secNorthLat, south: secSouthLat, west: secWestLng, east: secEastLng };
+}
+
+function dsuPolygon(dsu) {
+  const sections = [dsu.north, dsu.middle, dsu.south].filter(s => s && s.length > 0);
+  if (sections.length === 0) return null;
+
+  const bounds = sections.map(sectionBounds).filter(Boolean);
+  if (bounds.length === 0) return null;
+
+  const north = Math.max(...bounds.map(b => b.north));
+  const south = Math.min(...bounds.map(b => b.south));
+  const west  = Math.min(...bounds.map(b => b.west));
+  const east  = Math.max(...bounds.map(b => b.east));
+
+  return [
+    [north, west], [north, east],
+    [east !== west ? south : south, east],
+    [south, west]
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Colors
+// ═══════════════════════════════════════════════════════════════════════
+const TYPE_COLORS = {
+  'Drillable':           { fill: '#1a7f37', stroke: '#1a7f37', bg: 'rgba(26,127,55,0.18)' },
+  'Potential Drillable': { fill: '#bf8700', stroke: '#9a6700', bg: 'rgba(191,135,0,0.18)' },
+  'Non-Op':              { fill: '#8b949e', stroke: '#656d76', bg: 'rgba(139,148,158,0.15)' },
+};
+
+function typeClass(t) {
+  if (t === 'Drillable') return 'type-drillable';
+  if (t === 'Potential Drillable') return 'type-potential';
+  return 'type-nonop';
+}
+
+// NMA-based opacity (more acres = more opaque)
+const MAX_NMA = Math.max(...DSU_DATA.map(d => d.nma));
+function nmaOpacity(nma) {
+  return 0.15 + 0.55 * (nma / MAX_NMA);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Initialize Map
+// ═══════════════════════════════════════════════════════════════════════
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([35.5, -99.0], 9);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19,
+}).addTo(map);
+
+// ═══════════════════════════════════════════════════════════════════════
+// Build Layers
+// ═══════════════════════════════════════════════════════════════════════
+const layers = {};       // unit -> L.polygon
+const allPolygons = [];  // for fitBounds
+
+DSU_DATA.forEach(dsu => {
+  const coords = dsuPolygon(dsu);
+  if (!coords) return;
+
+  const colors = TYPE_COLORS[dsu.type] || TYPE_COLORS['Non-Op'];
+  const poly = L.polygon(coords, {
+    color: colors.stroke, weight: 2, opacity: 0.9,
+    fillColor: colors.fill, fillOpacity: nmaOpacity(dsu.nma),
+    className: 'dsu-poly'
+  }).addTo(map);
+
+  // Tooltip on hover
+  poly.bindTooltip(
+    `<b>Unit ${dsu.unit}</b><br>NMA: ${dsu.nma.toLocaleString()}<br>${dsu.type}`,
+    { sticky: true, className: '' }
+  );
+
+  // Click → detail
+  poly.on('click', () => openDetail(dsu));
+
+  // Center label
+  const center = poly.getBounds().getCenter();
+  const label = L.marker(center, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="color:#1f2328;font-size:11px;font-weight:700;text-shadow:0 1px 2px rgba(255,255,255,0.8);
+                          white-space:nowrap;text-align:center;pointer-events:none;">${dsu.unit}</div>`,
+      iconSize: [60, 16], iconAnchor: [30, 8]
+    }),
+    interactive: false
+  }).addTo(map);
+
+  layers[dsu.unit] = { poly, label };
+  allPolygons.push(poly);
+});
+
+// Fit to all polygons
+if (allPolygons.length > 0) {
+  const group = L.featureGroup(allPolygons);
+  map.fitBounds(group.getBounds().pad(0.1));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PLSS Grid Overlay — Township, Range & Section Labels
+// ═══════════════════════════════════════════════════════════════════════
+const gridLayer = L.layerGroup().addTo(map);
+const sectionLabelLayer = L.layerGroup(); // added at higher zoom
+
+// Collect all referenced townships from the data
+const referencedTwps = new Set();
+DSU_DATA.forEach(dsu => {
+  [dsu.north, dsu.middle, dsu.south].forEach(str => {
+    const p = parseSectionTownshipRange(str);
+    if (p) referencedTwps.add(`${p.township}${p.twpDir}-${p.range}${p.rngDir}`);
+  });
+});
+
+// Build grid only for referenced townships (no buffer)
+const twpSet = referencedTwps;
+
+twpSet.forEach(key => {
+  const m = key.match(/^(\d+)N-(\d+)W$/);
+  if (!m) return;
+  const t = +m[1], r = +m[2];
+  if (t < 1 || r < 1) return;
+
+  const midLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
+  const miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
+  const twpSouthLat = INDIAN_MERIDIAN.lat + (t - 1) * TWP_MILES / MI_PER_DEG_LAT;
+  const twpNorthLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
+  const twpWestLng  = INDIAN_MERIDIAN.lng - r * TWP_MILES / miPerDegLng;
+  const twpEastLng  = INDIAN_MERIDIAN.lng - (r - 1) * TWP_MILES / miPerDegLng;
+
+  // Township boundary (heavier line)
+  gridLayer.addLayer(L.rectangle([[twpSouthLat, twpWestLng], [twpNorthLat, twpEastLng]], {
+    color: '#b0b8c1', weight: 1.5, opacity: 0.6, fill: false, interactive: false
+  }));
+
+  // Township label at center
+  const twpCenterLat = (twpSouthLat + twpNorthLat) / 2;
+  const twpCenterLng = (twpWestLng + twpEastLng) / 2;
+  gridLayer.addLayer(L.marker([twpCenterLat, twpCenterLng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="color:#b0b8c1;font-size:11px;font-weight:600;white-space:nowrap;text-align:center;pointer-events:none;">T${t}N R${r}W</div>`,
+      iconSize: [80, 14], iconAnchor: [40, 14]
+    }),
+    interactive: false
+  }));
+
+  // Section grid lines and labels
+  for (let sec = 1; sec <= 36; sec++) {
+    const { row, col } = sectionToRowCol(sec);
+    const secNLat = twpSouthLat + (6 - row) * SEC_MILES / MI_PER_DEG_LAT;
+    const secSLat = twpSouthLat + (5 - row) * SEC_MILES / MI_PER_DEG_LAT;
+    const secWLng = twpWestLng + col * SEC_MILES / miPerDegLng;
+    const secELng = twpWestLng + (col + 1) * SEC_MILES / miPerDegLng;
+
+    // Section boundary (lighter line)
+    sectionLabelLayer.addLayer(L.rectangle([[secSLat, secWLng], [secNLat, secELng]], {
+      color: '#c8cfd6', weight: 0.7, opacity: 0.5, fill: false, interactive: false
+    }));
+
+    // Section number label
+    const secCLat = (secNLat + secSLat) / 2;
+    const secCLng = (secWLng + secELng) / 2;
+    sectionLabelLayer.addLayer(L.marker([secCLat, secCLng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="color:#c0c8d0;font-size:9px;font-weight:400;text-align:center;pointer-events:none;">${sec}</div>`,
+        iconSize: [20, 12], iconAnchor: [10, 6]
+      }),
+      interactive: false
+    }));
+  }
+});
+
+// Show section detail only when zoomed in enough
+function updateGridVisibility() {
+  const z = map.getZoom();
+  if (z >= 11 && !map.hasLayer(sectionLabelLayer)) {
+    sectionLabelLayer.addTo(map);
+  } else if (z < 11 && map.hasLayer(sectionLabelLayer)) {
+    map.removeLayer(sectionLabelLayer);
+  }
+}
+map.on('zoomend', updateGridVisibility);
+updateGridVisibility();
+
+// ═══════════════════════════════════════════════════════════════════════
+// County Labels — large semi-transparent text
+// ═══════════════════════════════════════════════════════════════════════
+const COUNTIES = [
+  { name: 'Roger Mills', lat: 35.68, lng: -99.70 },
+  { name: 'Custer',      lat: 35.64, lng: -98.95 },
+  { name: 'Beckham',     lat: 35.27, lng: -99.70 },
+  { name: 'Washita',     lat: 35.15, lng: -98.95 },
+  { name: 'Dewey',       lat: 35.93, lng: -99.00 },
+];
+
+COUNTIES.forEach(function(co) {
+  var labelHtml = '<div style="color:rgba(140,150,160,0.35);font-size:28px;font-weight:700;font-style:italic;white-space:nowrap;text-align:center;pointer-events:none;letter-spacing:6px;text-transform:uppercase;">' + co.name + '</div>';
+  L.marker([co.lat, co.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: labelHtml,
+      iconSize: [250, 36], iconAnchor: [125, 18]
+    }),
+    interactive: false
+  }).addTo(map);
+});
+
+
+
+// Sidebar List
+// ═══════════════════════════════════════════════════════════════════════
+function renderList(data) {
+  const el = document.getElementById('dsu-list');
+  el.innerHTML = data.map(d => {
+    const tc = typeClass(d.type);
+    return `<div class="dsu-item" data-unit="${d.unit}" onclick="selectUnit('${d.unit}')">
+      <div class="unit-header">
+        <span class="unit-id">Unit ${d.unit}</span>
+        <span class="unit-type ${tc}">${d.type}</span>
+      </div>
+      <div class="unit-meta">
+        <span>NMA <span class="val">${d.nma.toLocaleString()}</span></span>
+        <span>W.I. <span class="val">${(d.wi * 100).toFixed(2)}%</span></span>
+        <span>NRI <span class="val">${(d.nri * 100).toFixed(2)}%</span></span>
+      </div>
+      ${d.operator ? `<div class="operator">${d.operator}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Stats
+  document.getElementById('stat-units').textContent = data.length;
+  document.getElementById('stat-nma').textContent = data.reduce((s, d) => s + d.nma, 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  const avgWI = data.length ? data.reduce((s, d) => s + d.wi, 0) / data.length : 0;
+  const avgNRI = data.length ? data.reduce((s, d) => s + d.nri, 0) / data.length : 0;
+  document.getElementById('stat-wi').textContent = (avgWI * 100).toFixed(2) + '%';
+  document.getElementById('stat-nri').textContent = (avgNRI * 100).toFixed(2) + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Filters
+// ═══════════════════════════════════════════════════════════════════════
+// Populate operator dropdown
+const operators = [...new Set(DSU_DATA.map(d => d.operator).filter(Boolean))].sort();
+const opSel = document.getElementById('filter-operator');
+operators.forEach(op => {
+  const o = document.createElement('option');
+  o.value = op; o.textContent = op;
+  opSel.appendChild(o);
+});
+
+function applyFilters() {
+  const typeVal = document.getElementById('filter-type').value;
+  const opVal = document.getElementById('filter-operator').value;
+  const search = document.getElementById('filter-search').value.toLowerCase().trim();
+
+  const filtered = DSU_DATA.filter(d => {
+    if (typeVal !== 'all' && d.type !== typeVal) return false;
+    if (opVal !== 'all' && d.operator !== opVal) return false;
+    if (search) {
+      const hay = [d.unit, d.operator, d.north, d.middle, d.south, d.type].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const visibleUnits = new Set(filtered.map(d => d.unit));
+
+  // Show/hide polygons
+  Object.entries(layers).forEach(([unit, { poly, label }]) => {
+    if (visibleUnits.has(unit)) {
+      if (!map.hasLayer(poly)) { poly.addTo(map); label.addTo(map); }
+    } else {
+      if (map.hasLayer(poly)) { map.removeLayer(poly); map.removeLayer(label); }
+    }
+  });
+
+  renderList(filtered);
+}
+
+document.getElementById('filter-type').addEventListener('change', applyFilters);
+document.getElementById('filter-operator').addEventListener('change', applyFilters);
+document.getElementById('filter-search').addEventListener('input', applyFilters);
+
+// Initial render
+applyFilters();
+
+// ═══════════════════════════════════════════════════════════════════════
+// Select / Highlight Unit
+// ═══════════════════════════════════════════════════════════════════════
+let activeUnit = null;
+
+function selectUnit(unit) {
+  // Deselect previous
+  document.querySelectorAll('.dsu-item.active').forEach(el => el.classList.remove('active'));
+
+  const dsu = DSU_DATA.find(d => d.unit === unit);
+  if (!dsu) return;
+
+  // Highlight sidebar
+  const el = document.querySelector(`.dsu-item[data-unit="${unit}"]`);
+  if (el) { el.classList.add('active'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  // Fly to polygon
+  const layer = layers[unit];
+  if (layer) {
+    map.flyToBounds(layer.poly.getBounds().pad(0.3), { duration: 0.6 });
+
+    // Flash effect
+    layer.poly.setStyle({ weight: 4, fillOpacity: 0.7 });
+    setTimeout(() => {
+      const colors = TYPE_COLORS[dsu.type] || TYPE_COLORS['Non-Op'];
+      layer.poly.setStyle({ weight: 2, fillOpacity: nmaOpacity(dsu.nma) });
+    }, 1200);
+  }
+
+  openDetail(dsu);
+  activeUnit = unit;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Detail Panel
+// ═══════════════════════════════════════════════════════════════════════
+function openDetail(dsu) {
+  const panel = document.getElementById('detail-panel');
+  document.getElementById('detail-title').textContent = `Unit ${dsu.unit}`;
+
+  const colors = TYPE_COLORS[dsu.type] || TYPE_COLORS['Non-Op'];
+  const tc = typeClass(dsu.type);
+  const nmaPercent = ((dsu.nma / MAX_NMA) * 100).toFixed(1);
+  const sections = [dsu.north, dsu.middle, dsu.south].filter(s => s);
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <h3>Overview</h3>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="label">Unit Number</div>
+          <div class="value highlight">${dsu.unit}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Unit Type</div>
+          <div class="value"><span class="unit-type ${tc}" style="font-size:12px;">${dsu.type}</span></div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Operator</div>
+          <div class="value">${dsu.operator || 'N/A'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Unit Size</div>
+          <div class="value">${dsu.unitSize.toLocaleString()} ac</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Acreage Position</h3>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="label">Net Mineral Acres</div>
+          <div class="value highlight">${dsu.nma.toLocaleString()}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">% of Unit</div>
+          <div class="value">${((dsu.nma / dsu.unitSize) * 100).toFixed(1)}%</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Working Interest</div>
+          <div class="value">${(dsu.wi * 100).toFixed(3)}%</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Net Revenue Interest</div>
+          <div class="value">${(dsu.nri * 100).toFixed(3)}%</div>
+        </div>
+      </div>
+      <div class="nma-bar-container">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#8b949e;margin-bottom:3px;">
+          <span>NMA vs Largest (${MAX_NMA.toLocaleString()})</span><span>${nmaPercent}%</span>
+        </div>
+        <div class="nma-bar"><div class="nma-bar-fill" style="width:${nmaPercent}%;background:${colors.fill};"></div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Sections (STR)</h3>
+      <ul class="str-list">
+        ${sections.map((s, i) => {
+          const labels = ['North', 'Middle', 'South'];
+          const sectionLabels = sections.length === 2 ? ['North', 'South'] : labels;
+          var sNma = SECTION_NMA[s] || "";
+          var nmaStr = sNma ? '<span style="float:right;color:#1f2328;font-weight:600;font-size:11px;">' + sNma.toLocaleString() + ' NMA</span>' : "";
+          return `<li style="display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#8b949e;font-size:10px;">${sectionLabels[i]}</span> &nbsp; ${s}</span>${nmaStr}</li>`;
+        }).join('')}
+      </ul>
+    </div>
+
+    <div class="detail-section">
+      <h3>Revenue Breakdown</h3>
+      <div class="detail-grid">
+        <div class="detail-field full">
+          <div class="label">NRI / W.I. Ratio</div>
+          <div class="value">${dsu.wi > 0 ? (dsu.nri / dsu.wi * 100).toFixed(1) + '%' : 'N/A'}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Gross Acres (Unit)</div>
+          <div class="value">${dsu.unitSize.toLocaleString()}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Net Acres</div>
+          <div class="value highlight">${dsu.nma.toLocaleString()}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  panel.classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+// Close detail on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+</script>
+</body>
+</html>
