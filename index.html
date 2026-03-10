@@ -94,6 +94,20 @@
   .leaflet-control-zoom a:hover { background: #f6f8fa !important; }
   .leaflet-control-attribution { background: rgba(255,255,255,0.85) !important; color: #656d76 !important; }
   .leaflet-control-attribution a { color: #0969da !important; }
+
+  .rank-slicer { position: absolute; right: 12px; z-index: 1000; background: rgba(255,255,255,0.95);
+    border-radius: 8px; border: 1px solid #d1d9e0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 10px 12px;
+    width: 170px; }
+  #rank-slicer-drillable { top: 12px; }
+  #rank-slicer-potential { top: auto; }
+  .rank-slicer h4 { font-size: 11px; color: #656d76; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .rank-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; margin-bottom: 4px;
+    background: #f6f8fa; border: 1px solid #e8ecf0; border-radius: 6px; cursor: pointer; font-size: 11px;
+    color: #1f2328; transition: all 0.15s; text-align: left; }
+  .rank-btn:hover { background: #ddf4ff; border-color: #0969da; }
+  .rank-btn .rank-num { font-weight: 700; font-size: 12px; color: #0969da; min-width: 20px; }
+  .rank-btn .rank-unit { font-weight: 600; }
+  .rank-btn .rank-nma { color: #656d76; font-size: 10px; margin-left: auto; }
 </style>
 </head>
 <body>
@@ -151,6 +165,10 @@
     <div class="detail-body" id="detail-body"></div>
   </div>
 
+  
+  <!-- Rank Slicers -->
+  <div id="rank-slicer-drillable"></div>
+  <div id="rank-slicer-potential"></div>
   <!-- Map -->
   <div id="map"></div>
 </div>
@@ -189,26 +207,26 @@ const SECTION_NMA = {
   "8-11N-19W":250.4,"9-11N-19W":205.5,"10-11N-19W":393.8,"16-11N-19W":440.2,"17-11N-19W":86.0
 };
 const DSU_DATA = [
-  { unit:"1077", nma:969.3, wi:0.50483, nri:0.39902, operator:"OSTRICH", type:"Drillable", north:"19-13N-18W", middle:"30-13N-18W", south:"31-13N-18W", unitSize:1920 },
-  { unit:"1065", nma:849.3, wi:0.66352, nri:0.52634, operator:"OSTRICH", type:"Drillable", north:"3-11N-19W", middle:"", south:"10-11N-19W", unitSize:1280 },
-  { unit:"851", nma:780.6, wi:0.40655, nri:0.31932, operator:"OSTRICH", type:"Drillable", north:"22-13N-19W", middle:"27-13N-19W", south:"34-13N-19W", unitSize:1920 },
-  { unit:"21", nma:728.7, wi:0.56933, nri:0.45349, operator:"OSTRICH", type:"Drillable", north:"14-13N-19W", middle:"", south:"23-13N-19W", unitSize:1280 },
-  { unit:"A14", nma:717.4, wi:0.37363, nri:0.29440, operator:"OSTRICH", type:"Drillable", north:"13-15N-19W", middle:"24-15N-19W", south:"25-15N-19W", unitSize:1920 },
-  { unit:"852", nma:658.6, wi:0.51451, nri:0.40160, operator:"OSTRICH", type:"Drillable", north:"3-12N-19W", middle:"", south:"10-12N-19W", unitSize:1280 },
-  { unit:"1066", nma:645.7, wi:0.50445, nri:0.40020, operator:"OSTRICH", type:"Drillable", north:"9-11N-19W", middle:"", south:"16-11N-19W", unitSize:1280 },
-  { unit:"1072", nma:634.5, wi:0.50775, nri:0.39662, operator:"OSTRICH", type:"Drillable", north:"4-12N-19W", middle:"", south:"9-12N-19W", unitSize:1249.62 },
-  { unit:"1075", nma:626.3, wi:0.48929, nri:0.38717, operator:"OSTRICH", type:"Drillable", north:"30-12N-19W", middle:"", south:"31-12N-19W", unitSize:1280 },
-  { unit:"902", nma:604.4, wi:0.47222, nri:0.37778, operator:"OSTRICH", type:"Drillable", north:"15-15N-17W", middle:"", south:"22-15N-17W", unitSize:1280 },
-  { unit:"1080", nma:560.2, wi:0.43768, nri:0.34964, operator:"OSTRICH", type:"Drillable", north:"20-14N-17W", middle:"", south:"29-14N-17W", unitSize:1280 },
-  { unit:"651", nma:510.3, wi:0.39866, nri:0.31494, operator:"OSTRICH", type:"Drillable", north:"6-13N-17W", middle:"", south:"7-13N-17W", unitSize:1280 },
-  { unit:"A26", nma:380.6, wi:0.29730, nri:0.23849, operator:"OSTRICH", type:"Drillable", north:"15-14N-18W", middle:"", south:"22-14N-18W", unitSize:1280 },
-  { unit:"1070", nma:370.0, wi:0.28906, nri:0.22836, operator:"OSTRICH", type:"Potential Drillable", north:"2-12N-19W", middle:"", south:"11-12N-19W", unitSize:1280 },
-  { unit:"648", nma:353.7, wi:0.27631, nri:0.22235, operator:"OSTRICH", type:"Potential Drillable", north:"2-15N-19W", middle:"", south:"11-15N-19W", unitSize:1280 },
-  { unit:"1067", nma:336.4, wi:0.26279, nri:0.20890, operator:"OSTRICH", type:"Potential Drillable", north:"8-11N-19W", middle:"", south:"17-11N-19W", unitSize:1280 },
-  { unit:"1085", nma:325.0, wi:0.25391, nri:0.20133, operator:"OSTRICH", type:"Potential Drillable", north:"17-15N-17W", middle:"", south:"20-15N-17W", unitSize:1280 },
-  { unit:"1076", nma:320.0, wi:0.25000, nri:0.19750, operator:"OSTRICH", type:"Potential Drillable", north:"15-12N-19W", middle:"", south:"22-12N-19W", unitSize:1280 },
+  { unit:"1077", nma:969.3, wi:0.50483, nri:0.39902, operator:"OSTRICH", type:"Drillable", north:"19-13N-18W", middle:"30-13N-18W", south:"31-13N-18W", unitSize:1920 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Skinner / Cleveland", keyOffsets:"NADEL Quetzal (CHRK) / Peregrine (CHRK) / Puffin (CHRK) / Osprey (SKNR) / Cotinga (SKNR?)", cherokeeTier:1, redForkTier:1, rank:1, comments:"Cherokee appears strong given depth and proximity to offset wells; Skinner section deemed productive; Red Fork thicker than comparable areas with productive net sand", drillingCommentary:"Drill N-S due to fault on southern end; steering line beneficial"},
+  { unit:"1065", nma:849.3, wi:0.66352, nri:0.52634, operator:"OSTRICH", type:"Drillable", north:"3-11N-19W", middle:"", south:"10-11N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale", secondaryTarget:"Cleveland Shale / Cottage Grove Shale", keyOffsets:"DVN Gadwall (CHRK) / MOC Carpenter (CHRK)", cherokeeTier:1, redForkTier:3, rank:11, comments:"Cherokee appears somewhat granite-washy but shows surprising oil presence; Cleveland/Cottage Grove intervals appear interesting hot shales; requires gas log analysis", drillingCommentary:""},
+  { unit:"851", nma:780.6, wi:0.40655, nri:0.31932, operator:"OSTRICH", type:"Drillable", north:"22-13N-19W", middle:"27-13N-19W", south:"34-13N-19W", unitSize:1920 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Skinner / Cleveland", keyOffsets:"NADEL Quetzal (CHRK) / Peregrine (CHRK) / Puffin (CHRK) / Osprey (SKNR) / Cotinga (SKNR?)", cherokeeTier:1, redForkTier:2, rank:4, comments:"Cherokee appears strong; Skinner section very productive; Red Fork thinner with likely higher GOR but productive; southern section faulted", drillingCommentary:"Drill N-S due to southern fault; steering line advantageous"},
+  { unit:"21", nma:728.7, wi:0.56933, nri:0.45349, operator:"OSTRICH", type:"Drillable", north:"14-13N-19W", middle:"", south:"23-13N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Skinner / Cleveland", keyOffsets:"NADEL Quetzal (CHRK) / Peregrine (CHRK) / Puffin (CHRK) / Osprey (SKNR)", cherokeeTier:1, redForkTier:2, rank:2, comments:"Cherokee appears strong given depth and offset proximity; Skinner section very productive; Red Fork thinner but productive with higher GOR; southern faulting noted", drillingCommentary:"Limited Control"},
+  { unit:"A14", nma:717.4, wi:0.37363, nri:0.29440, operator:"OSTRICH", type:"Drillable", north:"13-15N-19W", middle:"24-15N-19W", south:"25-15N-19W", unitSize:1920 , primaryTarget:"Cleveland / Skinner", secondaryTarget:"Red Fork / Cherokee", keyOffsets:"MOC Patsy (CHRK) / Biotite (CHRK?)", cherokeeTier:2, redForkTier:2, rank:7, comments:"Red Fork dirtier than preferred with larger gross section; Skinner thin but present as optimal landing zone over Cherokee; Cleveland appears strong", drillingCommentary:""},
+  { unit:"852", nma:658.6, wi:0.51451, nri:0.40160, operator:"OSTRICH", type:"Drillable", north:"3-12N-19W", middle:"", south:"10-12N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Cleveland Shale", keyOffsets:"NADEL Quetzal (CHRK) / Peregrine (CHRK) / Puffin (CHRK) / Osprey (SKNR)", cherokeeTier:1, redForkTier:2, rank:6, comments:"Cherokee and Red Fork appear strong, likely high GOR targets; Red Fork vertical tests show gassy nature; Cleveland exhibits unconventional signature; requires mudlog examination", drillingCommentary:"Drill S-N up-dip into possible northern feature"},
+  { unit:"1066", nma:645.7, wi:0.50445, nri:0.40020, operator:"OSTRICH", type:"Drillable", north:"9-11N-19W", middle:"", south:"16-11N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale", secondaryTarget:"Cleveland Shale / Cottage Grove Shale", keyOffsets:"DVN Gadwall (CHRK) / MOC Carpenter (CHRK)", cherokeeTier:1, redForkTier:3, rank:10, comments:"Cherokee somewhat granite-washy but shows surprising oil presence; Cleveland/Cottage Grove intervals very interesting hot shales with storage potential; requires gas log", drillingCommentary:"Limited Control; drill N-S into possible southern fault"},
+  { unit:"1072", nma:634.5, wi:0.50775, nri:0.39662, operator:"OSTRICH", type:"Drillable", north:"4-12N-19W", middle:"", south:"9-12N-19W", unitSize:1249.62 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Cleveland Shale", keyOffsets:"NADEL Quetzal (CHRK) / Peregrine (CHRK) / Puffin (CHRK) / Osprey (SKNR)", cherokeeTier:1, redForkTier:1, rank:5, comments:"Cherokee and Red Fork appear strong with likely high GOR targets; Red Fork vertical tests show gassy character; Cleveland exhibits unconventional signature; DST shows gas shows", drillingCommentary:"Drill S-N up-dip into possible feature north of section"},
+  { unit:"1075", nma:626.3, wi:0.48929, nri:0.38717, operator:"OSTRICH", type:"Drillable", north:"30-12N-19W", middle:"", south:"31-12N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Atoka / Cleveland", keyOffsets:"DVN Gadwall (CHRK) / MOC Carpenter (CHRK)", cherokeeTier:2, redForkTier:1, rank:8, comments:"Cherokee somewhat granite-washy but should yield strong wells; Red Fork present with good appearance and multiple landing points; high GOR likely given depth", drillingCommentary:"Drill S-N up-dip on well control"},
+  { unit:"902", nma:604.4, wi:0.47222, nri:0.37778, operator:"OSTRICH", type:"Drillable", north:"15-15N-17W", middle:"", south:"22-15N-17W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Atoka / Cottage Grove", keyOffsets:"NADEL Illy (RDFK) / MOC Gary Beadles (RDFK) / Sawatzky (SKNR?) / Edward (RDFK?)", cherokeeTier:3, redForkTier:1, rank:3, comments:"Red Fork thin but present and productive; targeting dirty Red Fork lookalike analogous to Hatcher Farms/Edna areas", drillingCommentary:"Drill S-N on well control"},
+  { unit:"1080", nma:560.2, wi:0.43768, nri:0.34964, operator:"OSTRICH", type:"Drillable", north:"20-14N-17W", middle:"", south:"29-14N-17W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Atoka / Cleveland / Cottage Grove", keyOffsets:"NA / MOC Clint (RDFK)", cherokeeTier:3, redForkTier:2, rank:13, comments:"Red Fork thin but present and should be productive; pursuing dirty Red Fork lookalike; desires additional data", drillingCommentary:"Limited control; drill N-S from control point"},
+  { unit:"651", nma:510.3, wi:0.39866, nri:0.31494, operator:"OSTRICH", type:"Drillable", north:"6-13N-17W", middle:"", south:"7-13N-17W", unitSize:1280 , primaryTarget:"Cherokee Shale", secondaryTarget:"Cleveland", keyOffsets:"NA / MOC Clint (RDFK)", cherokeeTier:2, redForkTier:3, rank:12, comments:"Tier 2 Cherokee given existing production proximity but deeper with strong pressure potential; past Red Fork shelf margin with expanded section and limited target development", drillingCommentary:""},
+  { unit:"A26", nma:380.6, wi:0.29730, nri:0.23849, operator:"OSTRICH", type:"Drillable", north:"15-14N-18W", middle:"", south:"22-14N-18W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Atoka / Cleveland / Skinner / Cherokee Shale", keyOffsets:"DUNCAN Monarch (RDFK) / Peridot (CHRK?)", cherokeeTier:2, redForkTier:3, rank:9, comments:"Limited data but Red Fork offset looks very strong, thick and productive; better control desired; seismic may be needed", drillingCommentary:""},
+  { unit:"1070", nma:370.0, wi:0.28906, nri:0.22836, operator:"OSTRICH", type:"Potential Drillable", north:"2-12N-19W", middle:"", south:"11-12N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Cleveland Shale", keyOffsets:"", cherokeeTier:1, redForkTier:2, rank:1, comments:"Cherokee and Red Fork appear strong with likely high GOR targets; Red Fork vertical tests show gassy signature; Cleveland shows unconventional characteristics", drillingCommentary:"Drill S-N up-dip into possible feature north of section"},
+  { unit:"648", nma:353.7, wi:0.27631, nri:0.22235, operator:"OSTRICH", type:"Potential Drillable", north:"2-15N-19W", middle:"", south:"11-15N-19W", unitSize:1280 , primaryTarget:"Red Fork / Skinner", secondaryTarget:"Skinner / Cleveland", keyOffsets:"", cherokeeTier:2, redForkTier:2, rank:3, comments:"Red Fork better to north with Cleveland; DSTs show GCM throughout Red Fork section; pairing with northern section would be ideal; dirty Skinner target looks interesting", drillingCommentary:""},
+  { unit:"1067", nma:336.4, wi:0.26279, nri:0.20890, operator:"OSTRICH", type:"Potential Drillable", north:"8-11N-19W", middle:"", south:"17-11N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale", secondaryTarget:"Cleveland Shale / Cottage Grove Shale", keyOffsets:"", cherokeeTier:2, redForkTier:2, rank:9, comments:"Cherokee somewhat granite-washy but shows surprising oil; Cleveland/Cottage Grove very interesting hot shales with storage potential; requires gas log; fault may exist south", drillingCommentary:"Limited Control; drill N-S into possible southern fault"},
+  { unit:"1085", nma:325.0, wi:0.25391, nri:0.20133, operator:"OSTRICH", type:"Potential Drillable", north:"17-15N-17W", middle:"", south:"20-15N-17W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Cottage Grove", keyOffsets:"", cherokeeTier:3, redForkTier:2, rank:4, comments:"Thinner dirty Red Fork pay; may not match quality of Amb Inn; very good dirty analogue for contributing tank below", drillingCommentary:"Strong well control for lateral placement"},
+  { unit:"1076", nma:320.0, wi:0.25000, nri:0.19750, operator:"OSTRICH", type:"Potential Drillable", north:"15-12N-19W", middle:"", south:"22-12N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Cleveland Shale", keyOffsets:"", cherokeeTier:1, redForkTier:3, rank:2, comments:"Cherokee and Red Fork appear strong with likely high GOR targets; Red Fork vertical tests show gassy signature; Cleveland shows unconventional characteristics", drillingCommentary:"Drill S-N up-dip into possible feature north of section"},
   { unit:"640", nma:308.2, wi:0.24080, nri:0.19160, operator:"UNKNOWN", type:"Non-Op", north:"13-13N-19W", middle:"", south:"24-13N-19W", unitSize:1280 },
-  { unit:"4", nma:273.9, wi:0.21396, nri:0.17038, operator:"CRAWLEY", type:"Potential Drillable", north:"32-12N-19W", middle:"", south:"5-11N-19W", unitSize:1280 },
+  { unit:"4", nma:273.9, wi:0.21396, nri:0.17038, operator:"CRAWLEY", type:"Potential Drillable", north:"32-12N-19W", middle:"", south:"5-11N-19W", unitSize:1280 , primaryTarget:"Cherokee Shale / Red Fork", secondaryTarget:"Atoka / Cleveland", keyOffsets:"", cherokeeTier:2, redForkTier:2, rank:8, comments:"Cherokee somewhat granite-washy but should yield strong wells; Red Fork present with good appearance and multiple landing points; high GOR likely given depth", drillingCommentary:"Drill S-N up-dip on well control"},
   { unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Potential Drillable", north:"25-13N-19W", middle:"", south:"36-13N-19W", unitSize:1280 },
   { unit:"11", nma:238.8, wi:0.18652, nri:0.14744, operator:"CRAWLEY", type:"Non-Op", north:"26-12N-19W", middle:"", south:"35-12N-19W", unitSize:1280 },
   { unit:"1078", nma:199.2, wi:0.15565, nri:0.12587, operator:"", type:"Non-Op", north:"17-13N-19W", middle:"", south:"20-13N-19W", unitSize:1280 },
@@ -226,8 +244,8 @@ const DSU_DATA = [
   { unit:"45", nma:84.8, wi:0.06628, nri:0.05271, operator:"CRAWLEY", type:"Non-Op", north:"28-14N-23W", middle:"", south:"33-14N-23W", unitSize:1280 },
   { unit:"1145", nma:83.8, wi:0.06547, nri:0.05319, operator:"DUNCAN", type:"Non-Op", north:"32-15N-19W", middle:"", south:"5-14N-19W", unitSize:1280 },
   { unit:"A34", nma:66.1, wi:0.05162, nri:0.04188, operator:"", type:"Non-Op", north:"4-12N-18W", middle:"", south:"9-12N-18W", unitSize:1280 },
-  { unit:"1083", nma:61.9, wi:0.04836, nri:0.03888, operator:"OSTRICH", type:"Potential Drillable", north:"14-14N-18W", middle:"", south:"23-14N-18W", unitSize:1280 },
-  { unit:"A15", nma:51.1, wi:0.03995, nri:0.03196, operator:"OSTRICH", type:"Potential Drillable", north:"13-14N-18W", middle:"", south:"24-14N-18W", unitSize:1280 },
+  { unit:"1083", nma:61.9, wi:0.04836, nri:0.03888, operator:"OSTRICH", type:"Potential Drillable", north:"14-14N-18W", middle:"", south:"23-14N-18W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Cherokee Shale / Cleveland", keyOffsets:"", cherokeeTier:2, redForkTier:2, rank:6, comments:"Red Fork dirty/thin but analogous to Hatcher/Illy sections; limited southern data; Cleveland strong and productive though thin, likely Tier 2 deeper than TOPAZ", drillingCommentary:"Limited Control; likely need to start drilling N-S from 14/23"},
+  { unit:"A15", nma:51.1, wi:0.03995, nri:0.03196, operator:"OSTRICH", type:"Potential Drillable", north:"13-14N-18W", middle:"", south:"24-14N-18W", unitSize:1280 , primaryTarget:"Red Fork", secondaryTarget:"Cherokee Shale / Cleveland", keyOffsets:"", cherokeeTier:2, redForkTier:2, rank:7, comments:"Red Fork dirty/thin but analogous to Hatcher/Illy sections; limited southern data; Cleveland strong and productive though thin, likely Tier 2 deeper than TOPAZ", drillingCommentary:"Limited Control; likely need to start drilling N-S from 14/23"},
   { unit:"1308", nma:40.7, wi:0.03181, nri:0.02584, operator:"NADEL & GUSSMAN", type:"Non-Op", north:"2-13N-19W", middle:"", south:"11-13N-19W", unitSize:1280 },
   { unit:"A38", nma:40.0, wi:0.03125, nri:0.02501, operator:"", type:"Non-Op", north:"29-13N-18W", middle:"", south:"32-13N-18W", unitSize:1280 },
   { unit:"19", nma:40.0, wi:0.03125, nri:0.02500, operator:"ROCKIES", type:"Non-Op", north:"14-15N-19W", middle:"", south:"23-15N-19W", unitSize:1280 },
@@ -382,6 +400,46 @@ DSU_DATA.forEach(dsu => {
   layers[dsu.unit] = { poly, label };
   allPolygons.push(poly);
 });
+
+
+// Rank Slicers by Category
+(function() {
+  function buildSlicer(containerId, title, type) {
+    var ranked = DSU_DATA.filter(function(d) { return d.rank && d.type === type; }).sort(function(a, b) { return a.rank - b.rank; });
+    var container = document.getElementById(containerId);
+    container.className = 'rank-slicer';
+    container.innerHTML = '<h4>' + title + '</h4>' + ranked.map(function(d) {
+      return '<button class="rank-btn" data-unit="' + d.unit + '"><span class="rank-num">#' + d.rank + '</span><span class="rank-unit">' + d.unit + '</span><span class="rank-nma">' + d.nma.toLocaleString() + '</span></button>';
+    }).join('');
+    container.addEventListener('click', function(e) {
+      var btn = e.target.closest('.rank-btn');
+      if (!btn) return;
+      var unitName = btn.getAttribute('data-unit');
+      var dsu = DSU_DATA.find(function(d) { return d.unit === unitName; });
+      if (dsu && layers[dsu.unit]) {
+        var poly = layers[dsu.unit].poly;
+        map.flyTo(poly.getBounds().getCenter(), 12, { duration: 0.8 });
+        poly.setStyle({ fillOpacity: 0.9 });
+        setTimeout(function() { poly.setStyle({ fillOpacity: 0.55 }); }, 600);
+        openDetail(dsu);
+      }
+    });
+  }
+  buildSlicer('rank-slicer-drillable', 'Drillable Units', 'Drillable');
+  buildSlicer('rank-slicer-potential', 'Potential Drillable', 'Potential Drillable');
+  // Position the potential slicer below the drillable one
+  var drillEl = document.getElementById('rank-slicer-drillable');
+  var potEl = document.getElementById('rank-slicer-potential');
+  var gap = 8;
+  function positionPotential() {
+    var rect = drillEl.getBoundingClientRect();
+    var mapRect = document.getElementById('map').getBoundingClientRect();
+    potEl.style.top = (rect.bottom - mapRect.top + gap) + 'px';
+  }
+  positionPotential();
+  window.addEventListener('resize', positionPotential);
+})();
+
 
 // Fit to all polygons
 if (allPolygons.length > 0) {
@@ -569,6 +627,14 @@ function applyFilters() {
   });
 
   renderList(filtered);
+
+  // Toggle rank slicer panels based on filter
+  var drillPanel = document.getElementById("rank-slicer-drillable");
+  var potPanel = document.getElementById("rank-slicer-potential");
+  if (typeVal === "Drillable") { drillPanel.style.display = ""; potPanel.style.display = "none"; }
+  else if (typeVal === "Potential Drillable") { drillPanel.style.display = "none"; potPanel.style.display = ""; }
+  else if (typeVal === "Non-Op") { drillPanel.style.display = "none"; potPanel.style.display = "none"; }
+  else { drillPanel.style.display = ""; potPanel.style.display = ""; }
 }
 
 document.getElementById('filter-type').addEventListener('change', applyFilters);
@@ -687,11 +753,49 @@ function openDetail(dsu) {
       </ul>
     </div>
 
+    ${dsu.primaryTarget ? `<div class="detail-section">
+      <h3>Reservoir Targets &amp; Geo Notes</h3>
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="label">Primary Target${dsu.primaryTarget.includes(" / ") ? "s" : ""}</div>
+          <div class="value">${dsu.primaryTarget.split(" / ").join("<br>")}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Secondary Target${dsu.secondaryTarget.includes(" / ") ? "s" : ""}</div>
+          <div class="value">${dsu.secondaryTarget.split(" / ").join("<br>")}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Cherokee Tier</div>
+          <div class="value" style="font-weight:700;color:${dsu.cherokeeTier===1?'#1a7f37':dsu.cherokeeTier===2?'#bf8700':'#cf222e'};">Tier ${dsu.cherokeeTier}</div>
+        </div>
+        <div class="detail-field">
+          <div class="label">Red Fork Tier</div>
+          <div class="value" style="font-weight:700;color:${dsu.redForkTier===1?'#1a7f37':dsu.redForkTier===2?'#bf8700':'#cf222e'};">Tier ${dsu.redForkTier}</div>
+        </div>
+        <div class="detail-field full">
+          <div class="label">Overall Rank</div>
+          <div class="value" style="font-size:18px;font-weight:700;">#${dsu.rank}</div>
+        </div>
+        ${dsu.keyOffsets ? `<div class="detail-field full">
+          <div class="label">Key Offsets</div>
+          <div class="value" style="font-size:11px;">${dsu.keyOffsets}</div>
+        </div>` : ''}
+        <div class="detail-field full">
+          <div class="label">Comments</div>
+          <div class="value" style="font-size:11px;line-height:1.5;">${dsu.comments}</div>
+        </div>
+        ${dsu.drillingCommentary ? `<div class="detail-field full">
+          <div class="label">Drilling Commentary</div>
+          <div class="value" style="font-size:11px;line-height:1.5;">${dsu.drillingCommentary}</div>
+        </div>` : ''}
+      </div>
+    </div>` : ''}
+
     <div class="detail-section">
       <h3>Revenue Breakdown</h3>
       <div class="detail-grid">
         <div class="detail-field full">
-          <div class="label">NRI / W.I. Ratio</div>
+          <div class="label">8/8ths NRI</div>
           <div class="value">${dsu.wi > 0 ? (dsu.nri / dsu.wi * 100).toFixed(1) + '%' : 'N/A'}</div>
         </div>
         <div class="detail-field">
