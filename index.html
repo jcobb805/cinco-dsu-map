@@ -335,7 +335,7 @@ const DSU_DATA = [
 // ═══════════════════════════════════════════════════════════════════════
 // PLSS Grid → Lat/Lng Converter (Indian Meridian, Oklahoma)
 // ═══════════════════════════════════════════════════════════════════════
-const INDIAN_MERIDIAN = { lat: 34.50299, lng: -97.24706 };
+const INDIAN_MERIDIAN = { lat: 34.50311, lng: -97.24749 }; // WGS84
 const MI_PER_DEG_LAT = 69.0;
 const TWP_MILES = 6;
 const SEC_MILES = 1;
@@ -535,17 +535,13 @@ if (allPolygons.length > 0) {
 const gridLayer = L.layerGroup().addTo(map);
 const sectionLabelLayer = L.layerGroup(); // added at higher zoom
 
-// Collect all referenced townships from the data
-const referencedTwps = new Set();
-DSU_DATA.forEach(dsu => {
-  [dsu.north, dsu.middle, dsu.south].forEach(str => {
-    const p = parseSectionTownshipRange(str);
-    if (p) referencedTwps.add(`${p.township}${p.twpDir}-${p.range}${p.rngDir}`);
-  });
-});
-
-// Build grid only for referenced townships (no buffer)
-const twpSet = referencedTwps;
+// Full 5-county PLSS grid: T10N-T17N, R14W-R26W
+var twpSet = new Set();
+for (var t = 10; t <= 17; t++) {
+  for (var r = 14; r <= 26; r++) {
+    twpSet.add(t + 'N-' + r + 'W');
+  }
+}
 
 twpSet.forEach(key => {
   const m = key.match(/^(\d+)N-(\d+)W$/);
