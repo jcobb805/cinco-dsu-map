@@ -565,6 +565,59 @@ L.control.layers(
   { position: 'topright' }
 ).addTo(map);
 
+// ── PLSS Labels (computed positions, placed over BLM grid lines) ──
+var twpLabelLayer = L.layerGroup().addTo(map);
+var secLabelLayer = L.layerGroup();
+
+(function() {
+  for (var t = 10; t <= 17; t++) {
+    for (var r = 14; r <= 26; r++) {
+      var midLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
+      var miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
+      var twpSouthLat = INDIAN_MERIDIAN.lat + (t - 1) * TWP_MILES / MI_PER_DEG_LAT;
+      var twpNorthLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
+      var twpWestLng = INDIAN_MERIDIAN.lng - r * TWP_MILES / miPerDegLng;
+
+      // Township label
+      var twpCLat = (twpSouthLat + twpNorthLat) / 2;
+      var twpCLng = twpWestLng + 3 * SEC_MILES / miPerDegLng;
+      twpLabelLayer.addLayer(L.marker([twpCLat, twpCLng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="color:#8b949e;font-size:11px;font-weight:600;white-space:nowrap;text-align:center;pointer-events:none;opacity:0.7;">T' + t + 'N R' + r + 'W</div>',
+          iconSize: [80, 14], iconAnchor: [40, 7]
+        }),
+        interactive: false
+      }));
+
+      // Section labels
+      for (var sec = 1; sec <= 36; sec++) {
+        var sRow = Math.floor((sec - 1) / 6);
+        var posInRow = (sec - 1) % 6;
+        var sCol = (sRow % 2 === 0) ? (5 - posInRow) : posInRow;
+        var secCLat = twpSouthLat + (5.5 - sRow) * SEC_MILES / MI_PER_DEG_LAT;
+        var secCLng = twpWestLng + (sCol + 0.5) * SEC_MILES / miPerDegLng;
+        secLabelLayer.addLayer(L.marker([secCLat, secCLng], {
+          icon: L.divIcon({
+            className: '',
+            html: '<div style="color:#a0a8b0;font-size:9px;font-weight:400;text-align:center;pointer-events:none;opacity:0.7;">' + sec + '</div>',
+            iconSize: [20, 12], iconAnchor: [10, 6]
+          }),
+          interactive: false
+        }));
+      }
+    }
+  }
+})();
+
+function updateLabelVisibility() {
+  var z = map.getZoom();
+  if (z >= 11 && !map.hasLayer(secLabelLayer)) secLabelLayer.addTo(map);
+  else if (z < 11 && map.hasLayer(secLabelLayer)) map.removeLayer(secLabelLayer);
+}
+map.on('zoomend', updateLabelVisibility);
+updateLabelVisibility();
+
 // ═══════════════════════════════════════════════════════════════════════
 // County Labels — large semi-transparent text
 // ═══════════════════════════════════════════════════════════════════════
