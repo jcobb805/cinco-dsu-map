@@ -335,8 +335,8 @@ const DSU_DATA = [
 // ═══════════════════════════════════════════════════════════════════════
 // PLSS Grid → Lat/Lng Converter (Indian Meridian, Oklahoma)
 // ═══════════════════════════════════════════════════════════════════════
-const INDIAN_MERIDIAN = { lat: 34.514, lng: -97.241 };
-const MI_PER_DEG_LAT = 69.33;
+const INDIAN_MERIDIAN = { lat: 34.5128, lng: -97.2396 };
+const MI_PER_DEG_LAT = 69.28;
 const TWP_MILES = 6;
 const SEC_MILES = 1;
 
@@ -435,11 +435,8 @@ var voyagerBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voy
   attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
 });
 voyagerBase.addTo(map);
-L.control.layers(
-  { 'Map': voyagerBase, 'Dark': darkBase, 'Topo': topoBase, 'Satellite': satBase },
-  {},
-  { position: 'topright' }
-).addTo(map);
+// Layer control will be created after BLM PLSS layer is defined
+var _baseMaps = { 'Map': voyagerBase, 'Dark': darkBase, 'Topo': topoBase, 'Satellite': satBase };
 
 // ═══════════════════════════════════════════════════════════════════════
 // Build Layers
@@ -530,87 +527,22 @@ if (allPolygons.length > 0) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// PLSS Grid Overlay — Township, Range & Section Labels
+// PLSS Grid Overlay — BLM Official Survey (Township + Section layers)
 // ═══════════════════════════════════════════════════════════════════════
-const gridLayer = L.layerGroup().addTo(map);
-const sectionLabelLayer = L.layerGroup(); // added at higher zoom
+var blmPLSS = L.tileLayer.wms('https://gis.blm.gov/arcgis/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/WMSServer', {
+  layers: '1,2',
+  format: 'image/png',
+  transparent: true,
+  opacity: 0.5,
+  maxZoom: 19,
+  attribution: 'PLSS: BLM'
+}).addTo(map);
 
-// Full 5-county PLSS grid: T10N-T17N, R14W-R26W
-var twpSet = new Set();
-for (var t = 10; t <= 17; t++) {
-  for (var r = 14; r <= 26; r++) {
-    twpSet.add(t + 'N-' + r + 'W');
-  }
-}
-
-twpSet.forEach(key => {
-  const m = key.match(/^(\d+)N-(\d+)W$/);
-  if (!m) return;
-  const t = +m[1], r = +m[2];
-  if (t < 1 || r < 1) return;
-
-  const midLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
-  const miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
-  const twpSouthLat = INDIAN_MERIDIAN.lat + (t - 1) * TWP_MILES / MI_PER_DEG_LAT;
-  const twpNorthLat = INDIAN_MERIDIAN.lat + t * TWP_MILES / MI_PER_DEG_LAT;
-  const twpWestLng  = INDIAN_MERIDIAN.lng - r * TWP_MILES / miPerDegLng;
-  const twpEastLng  = INDIAN_MERIDIAN.lng - (r - 1) * TWP_MILES / miPerDegLng;
-
-  // Township boundary (heavier line)
-  gridLayer.addLayer(L.rectangle([[twpSouthLat, twpWestLng], [twpNorthLat, twpEastLng]], {
-    color: '#b0b8c1', weight: 1.5, opacity: 0.6, fill: false, interactive: false
-  }));
-
-  // Township label at center
-  const twpCenterLat = (twpSouthLat + twpNorthLat) / 2;
-  const twpCenterLng = (twpWestLng + twpEastLng) / 2;
-  gridLayer.addLayer(L.marker([twpCenterLat, twpCenterLng], {
-    icon: L.divIcon({
-      className: '',
-      html: `<div style="color:#b0b8c1;font-size:11px;font-weight:600;white-space:nowrap;text-align:center;pointer-events:none;">T${t}N R${r}W</div>`,
-      iconSize: [80, 14], iconAnchor: [40, 14]
-    }),
-    interactive: false
-  }));
-
-  // Section grid lines and labels
-  for (let sec = 1; sec <= 36; sec++) {
-    const { row, col } = sectionToRowCol(sec);
-    const secNLat = twpSouthLat + (6 - row) * SEC_MILES / MI_PER_DEG_LAT;
-    const secSLat = twpSouthLat + (5 - row) * SEC_MILES / MI_PER_DEG_LAT;
-    const secWLng = twpWestLng + col * SEC_MILES / miPerDegLng;
-    const secELng = twpWestLng + (col + 1) * SEC_MILES / miPerDegLng;
-
-    // Section boundary (lighter line)
-    sectionLabelLayer.addLayer(L.rectangle([[secSLat, secWLng], [secNLat, secELng]], {
-      color: '#c8cfd6', weight: 0.7, opacity: 0.5, fill: false, interactive: false
-    }));
-
-    // Section number label
-    const secCLat = (secNLat + secSLat) / 2;
-    const secCLng = (secWLng + secELng) / 2;
-    sectionLabelLayer.addLayer(L.marker([secCLat, secCLng], {
-      icon: L.divIcon({
-        className: '',
-        html: `<div style="color:#c0c8d0;font-size:9px;font-weight:400;text-align:center;pointer-events:none;">${sec}</div>`,
-        iconSize: [20, 12], iconAnchor: [10, 6]
-      }),
-      interactive: false
-    }));
-  }
-});
-
-// Show section detail only when zoomed in enough
-function updateGridVisibility() {
-  const z = map.getZoom();
-  if (z >= 11 && !map.hasLayer(sectionLabelLayer)) {
-    sectionLabelLayer.addTo(map);
-  } else if (z < 11 && map.hasLayer(sectionLabelLayer)) {
-    map.removeLayer(sectionLabelLayer);
-  }
-}
-map.on('zoomend', updateGridVisibility);
-updateGridVisibility();
+L.control.layers(
+  _baseMaps,
+  { 'PLSS Grid (BLM)': blmPLSS },
+  { position: 'topright' }
+).addTo(map);
 
 // ═══════════════════════════════════════════════════════════════════════
 // County Labels — large semi-transparent text
