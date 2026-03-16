@@ -578,31 +578,6 @@ function renderRigs() {
 
 renderAll();
 renderRigs();
-
-// DEBUG: Draw BLM polygon for section 14-14N-18W to check alignment
-(function() {
-  var debugKey = '14-14N-18W';
-  var debugPoly = BLM_SECTION_POLYGONS[debugKey];
-  if (debugPoly) {
-    debugPoly.forEach(function(ring) {
-      L.polygon(ring, { color: 'red', weight: 3, opacity: 1, fillOpacity: 0, dashArray: '8,4' }).addTo(map);
-    });
-    // Also add corner markers
-    var ring = debugPoly[0];
-    ring.forEach(function(pt, i) {
-      L.circleMarker(pt, { radius: 3, color: 'red', fillColor: 'yellow', fillOpacity: 1, weight: 1 })
-       .bindTooltip('Pt ' + i + ': ' + pt[0].toFixed(6) + ', ' + pt[1].toFixed(6))
-       .addTo(map);
-    });
-  }
-  // Also draw a BLM bounds box for same section
-  var debugBounds = BLM_SECTION_BOUNDS[debugKey];
-  if (debugBounds) {
-    L.rectangle([[debugBounds.south, debugBounds.west], [debugBounds.north, debugBounds.east]], {
-      color: 'cyan', weight: 2, opacity: 1, fillOpacity: 0, dashArray: '4,4'
-    }).addTo(map);
-  }
-})();
 `;
 
 // Insert JS before the closing </script> tag, after the Escape keydown listener
