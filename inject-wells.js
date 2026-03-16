@@ -232,63 +232,67 @@ updateLabelVisibility();`;
 
 html = html.replace(oldGridBlock, newGridBlock);
 
-// ── 0c. Replace computed sectionBounds with BLM actual survey data ──
-// Merge DSU-specific bounds + all-section bounds for labels
-const blmDsuBounds = JSON.parse(fs.readFileSync('blm_section_bounds.json', 'utf8'));
+// ── 0c. Replace DSU polygon rendering with BLM actual survey polygons ──
 const blmAllBounds = JSON.parse(fs.readFileSync('blm_all_section_bounds.json', 'utf8'));
-const blmBounds = { ...blmAllBounds, ...blmDsuBounds }; // DSU bounds override for precision
+const blmPolygons = JSON.parse(fs.readFileSync('blm_section_polygons.json', 'utf8'));
 
-// Inject BLM bounds lookup table right after the PLSS constants
-const blmLookupJS = `\nconst BLM_SECTION_BOUNDS = ${JSON.stringify(blmBounds)};\n`;
+// Inject BLM bounds (for labels) and polygons (for DSU shapes) after PLSS constants
+const blmDataJS = `
+const BLM_SECTION_BOUNDS = ${JSON.stringify(blmAllBounds)};
+const BLM_SECTION_POLYGONS = ${JSON.stringify(blmPolygons)};
+`;
 html = html.replace(
   'const SEC_MILES = 1;',
-  'const SEC_MILES = 1;' + blmLookupJS
+  'const SEC_MILES = 1;' + blmDataJS
 );
 
-// Replace the sectionBounds function to use BLM data with computed fallback
-const oldSectionBounds = `function sectionBounds(str) {
-  const p = parseSectionTownshipRange(str);
-  if (!p) return null;
+// Replace dsuPolygon to use BLM actual polygon geometry
+const oldDsuPolygon = `function dsuPolygon(dsu) {
+  const sections = [dsu.north, dsu.middle, dsu.south].filter(s => s && s.length > 0);
+  if (sections.length === 0) return null;
 
-  const midLat = INDIAN_MERIDIAN.lat + p.township * TWP_MILES / MI_PER_DEG_LAT;
-  const miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
+  const bounds = sections.map(sectionBounds).filter(Boolean);
+  if (bounds.length === 0) return null;
 
-  // Township boundaries
-  const twpSouthLat = INDIAN_MERIDIAN.lat + (p.township - 1) * TWP_MILES / MI_PER_DEG_LAT;
-  const twpWestLng  = INDIAN_MERIDIAN.lng - p.range * TWP_MILES / miPerDegLng;
+  const north = Math.max(...bounds.map(b => b.north));
+  const south = Math.min(...bounds.map(b => b.south));
+  const west  = Math.min(...bounds.map(b => b.west));
+  const east  = Math.max(...bounds.map(b => b.east));
 
-  const { row, col } = sectionToRowCol(p.section);
-
-  // Section bounds (row 0 = northernmost = top of township)
-  const secNorthLat = twpSouthLat + (6 - row) * SEC_MILES / MI_PER_DEG_LAT;
-  const secSouthLat = twpSouthLat + (5 - row) * SEC_MILES / MI_PER_DEG_LAT;
-  const secWestLng  = twpWestLng + col * SEC_MILES / miPerDegLng;
-  const secEastLng  = twpWestLng + (col + 1) * SEC_MILES / miPerDegLng;
-
-  return { north: secNorthLat, south: secSouthLat, west: secWestLng, east: secEastLng };
+  return [
+    [north, west], [north, east],
+    [east !== west ? south : south, east],
+    [south, west]
+  ];
 }`;
 
-const newSectionBounds = `function sectionBounds(str) {
-  const p = parseSectionTownshipRange(str);
-  if (!p) return null;
-  // Use BLM actual survey bounds if available
-  const key = p.section + '-' + p.township + 'N-' + p.range + 'W';
-  if (BLM_SECTION_BOUNDS[key]) return BLM_SECTION_BOUNDS[key];
-  // Fallback to computed
-  const midLat = INDIAN_MERIDIAN.lat + p.township * TWP_MILES / MI_PER_DEG_LAT;
-  const miPerDegLng = MI_PER_DEG_LAT * Math.cos(midLat * Math.PI / 180);
-  const twpSouthLat = INDIAN_MERIDIAN.lat + (p.township - 1) * TWP_MILES / MI_PER_DEG_LAT;
-  const twpWestLng  = INDIAN_MERIDIAN.lng - p.range * TWP_MILES / miPerDegLng;
-  const { row, col } = sectionToRowCol(p.section);
-  return {
-    north: twpSouthLat + (6 - row) * SEC_MILES / MI_PER_DEG_LAT,
-    south: twpSouthLat + (5 - row) * SEC_MILES / MI_PER_DEG_LAT,
-    west: twpWestLng + col * SEC_MILES / miPerDegLng,
-    east: twpWestLng + (col + 1) * SEC_MILES / miPerDegLng
-  };
+const newDsuPolygon = `function dsuPolygon(dsu) {
+  const sections = [dsu.north, dsu.middle, dsu.south].filter(s => s && s.length > 0);
+  if (sections.length === 0) return null;
+
+  // Try BLM actual polygons first — returns multi-polygon (array of rings)
+  const blmRings = [];
+  sections.forEach(str => {
+    const p = parseSectionTownshipRange(str);
+    if (!p) return;
+    const key = p.section + '-' + p.township + 'N-' + p.range + 'W';
+    if (BLM_SECTION_POLYGONS[key]) {
+      BLM_SECTION_POLYGONS[key].forEach(ring => blmRings.push(ring));
+    }
+  });
+  if (blmRings.length > 0) return blmRings;
+
+  // Fallback to computed bounding box
+  const bounds = sections.map(sectionBounds).filter(Boolean);
+  if (bounds.length === 0) return null;
+  const north = Math.max(...bounds.map(b => b.north));
+  const south = Math.min(...bounds.map(b => b.south));
+  const west  = Math.min(...bounds.map(b => b.west));
+  const east  = Math.max(...bounds.map(b => b.east));
+  return [[ [north, west], [north, east], [south, east], [south, west] ]];
 }`;
 
-html = html.replace(oldSectionBounds, newSectionBounds);
+html = html.replace(oldDsuPolygon, newDsuPolygon);
 
 // ── 1. CSS ──
 const newCSS = `
