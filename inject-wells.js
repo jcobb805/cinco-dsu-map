@@ -150,63 +150,115 @@ const rigData = JSON.parse(fs.readFileSync('rigs_map_data.json', 'utf8'));
 const permitData = JSON.parse(fs.readFileSync('permits_map_data.json', 'utf8'));
 // ── Build-time: compute unit activity, Cinco wells, and operator palette ──
 function computeUnitData(dsuData, wells, permits) {
-  // Build section→unit lookup
-  const secToUnit = {};
-  dsuData.forEach(dsu => {
-    [dsu.north, dsu.middle, dsu.south].filter(Boolean).forEach(str => {
-      // Normalize: strip leading zeros from section number
-      const norm = str.replace(/^0+/, '');
-      secToUnit[norm] = dsu.unit;
+  var blmPolygons = JSON.parse(fs.readFileSync('blm_section_polygons.json', 'utf8'));
+  var DSU_OFFSET_LAT = 0.0004;
+
+  // Build combined polygon rings for each DSU from BLM section data
+  function parseSectionTownshipRange(str) {
+    var m = str.match(/(\d+)-(\d+)N-(\d+)W/);
+    if (!m) return null;
+    return { section: parseInt(m[1]), township: parseInt(m[2]), range: parseInt(m[3]) };
+  }
+
+  var dsuPolygons = {};
+  dsuData.forEach(function(dsu) {
+    var rings = [];
+    [dsu.north, dsu.middle, dsu.south].filter(Boolean).forEach(function(str) {
+      var p = parseSectionTownshipRange(str);
+      if (!p) return;
+      var key = p.section + '-' + p.township + 'N-' + p.range + 'W';
+      if (blmPolygons[key]) {
+        blmPolygons[key].forEach(function(ring) {
+          rings.push(ring.map(function(pt) { return [pt[0] + DSU_OFFSET_LAT, pt[1]]; }));
+        });
+      }
+    });
+    if (rings.length > 0) dsuPolygons[dsu.unit] = rings;
+  });
+
+  // Ray-casting point-in-polygon
+  function pointInRing(lat, lng, ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      var yi = ring[i][0], xi = ring[i][1];
+      var yj = ring[j][0], xj = ring[j][1];
+      if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  function pointInDsu(lat, lng, rings) {
+    for (var r = 0; r < rings.length; r++) {
+      if (pointInRing(lat, lng, rings[r])) return true;
+    }
+    return false;
+  }
+
+  // Compute fraction of lateral inside DSU (sample 20 points)
+  function lateralOverlap(lat1, lng1, lat2, lng2, rings) {
+    var samples = 20;
+    var inside = 0;
+    for (var i = 0; i <= samples; i++) {
+      var t = i / samples;
+      var lat = lat1 + (lat2 - lat1) * t;
+      var lng = lng1 + (lng2 - lng1) * t;
+      if (pointInDsu(lat, lng, rings)) inside++;
+    }
+    return inside / (samples + 1);
+  }
+
+  var MIN_OVERLAP = 0.10;
+  var unitActivity = {};
+  var cincoWells = [];
+  var recentBuckets = ['2023','2024','2025','2026'];
+  var dsuUnits = Object.keys(dsuPolygons);
+
+  wells.forEach(function(w) {
+    if (!w.lat || !w.lng) return;
+    dsuUnits.forEach(function(unit) {
+      var rings = dsuPolygons[unit];
+      var overlap = (w.lat2 && w.lng2)
+        ? lateralOverlap(w.lat, w.lng, w.lat2, w.lng2, rings)
+        : (pointInDsu(w.lat, w.lng, rings) ? 1.0 : 0.0);
+      if (overlap < MIN_OVERLAP) return;
+
+      if (!unitActivity[unit]) unitActivity[unit] = { rcw: false, lcw: false, duc: false, permit: false };
+      if (w.tb === 'DUC') {
+        unitActivity[unit].duc = true;
+        cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'duc' });
+      } else if (recentBuckets.indexOf(w.tb) >= 0) {
+        unitActivity[unit].rcw = true;
+        cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'recent' });
+      } else {
+        unitActivity[unit].lcw = true;
+        cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'legacy' });
+      }
     });
   });
 
-  // Match wells/permits to DSU units
-  const unitActivity = {};
-  const cincoWells = [];
+  permits.forEach(function(p) {
+    if (!p.lat || !p.lng) return;
+    dsuUnits.forEach(function(unit) {
+      var rings = dsuPolygons[unit];
+      var overlap = (p.lat2 && p.lng2)
+        ? lateralOverlap(p.lat, p.lng, p.lat2, p.lng2, rings)
+        : (pointInDsu(p.lat, p.lng, rings) ? 1.0 : 0.0);
+      if (overlap < MIN_OVERLAP) return;
 
-  wells.forEach(w => {
-    if (!w.str) return;
-    const norm = w.str.replace(/^0+/, '');
-    const unit = secToUnit[norm];
-    if (!unit) return;
-    if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
-    var recentBuckets = ['2023','2024','2025','2026'];
-    if (w.tb === 'DUC') {
-      unitActivity[unit].duc = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'duc' });
-    } else if (recentBuckets.indexOf(w.tb) >= 0) {
-      unitActivity[unit].rcw = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'recent' });
-    } else {
-      unitActivity[unit].lcw = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'legacy' });
-    }
+      if (!unitActivity[unit]) unitActivity[unit] = { rcw: false, lcw: false, duc: false, permit: false };
+      unitActivity[unit].permit = true;
+      cincoWells.push({ n: p.n, unit: unit, fg: p.fg, op: p.op, lat: p.lat, lng: p.lng, cat: 'permit' });
+    });
   });
 
-  permits.forEach(p => {
-    if (!p.str) return;
-    const norm = p.str.replace(/^0+/, '');
-    const unit = secToUnit[norm];
-    if (!unit) return;
-    if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
-    unitActivity[unit].permit = true;
-    cincoWells.push({ n: p.n, unit: unit, fg: p.fg, op: p.op, lat: p.lat, lng: p.lng, cat: "permit" });
-  });
-
-  // Collect unique operators and assign colors
-  const opSet = new Set();
-  dsuData.forEach(d => { if (d.operator) opSet.add(d.operator); });
-  const OP_PALETTE = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#6a4c93','#1d3557','#264653','#a8dadc','#d62828','#023e8a','#0077b6'];
-  const opColors = {};
-  let idx = 0;
-  [...opSet].sort().forEach(op => { opColors[op] = OP_PALETTE[idx % OP_PALETTE.length]; idx++; });
-
-  // Manual overrides for wells with wrong surface STR
+  // Manual overrides
   cincoWells.forEach(function(w) {
     if (w.n === "BEATY 1-2-11-14CHX" && w.unit === "1117") w.unit = "28";
   });
 
-  // Deduplicate cincoWells by name+unit (prefer well > duc > permit)
+  // Deduplicate by name+unit (prefer well > duc > permit)
   var catPriority = { recent: 0, legacy: 1, duc: 2, permit: 3 };
   var seen = {};
   cincoWells.forEach(function(w) {
@@ -215,7 +267,16 @@ function computeUnitData(dsuData, wells, permits) {
   });
   cincoWells.length = 0;
   Object.values(seen).forEach(function(w) { cincoWells.push(w); });
-  console.log('Activity: ' + Object.keys(unitActivity).length + ' units with wells/permits, ' + cincoWells.length + ' Cinco wells (deduped)');
+
+  // Operator colors
+  var opSet = new Set();
+  dsuData.forEach(function(d) { if (d.operator) opSet.add(d.operator); });
+  var OP_PALETTE = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#6a4c93','#1d3557','#264653','#a8dadc','#d62828','#023e8a','#0077b6'];
+  var opColors = {};
+  var idx = 0;
+  [...opSet].sort().forEach(function(op) { opColors[op] = OP_PALETTE[idx % OP_PALETTE.length]; idx++; });
+
+  console.log('Activity: ' + Object.keys(unitActivity).length + ' units with wells/permits, ' + cincoWells.length + ' Cinco wells (10% lateral overlap, deduped)');
   return { unitActivity, cincoWells, opColors };
 }
 
