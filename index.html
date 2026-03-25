@@ -916,7 +916,8 @@ var rigLayerGroup = L.layerGroup().addTo(map);
 
 // Filter state
 var activeFormations = new Set(Object.keys(FORMATION_COLORS));
-var activeTimeBuckets = new Set(TIME_BUCKETS_ORDER);
+var DEFAULT_TIME_BUCKETS = ['2026','2025','2024','2023'];
+var activeTimeBuckets = new Set(DEFAULT_TIME_BUCKETS);
 
 // Counts
 var fgCounts = {}, tbCounts = {}, ducFgCounts = {}, permitFgCounts = {};
@@ -963,7 +964,8 @@ Object.keys(FORMATION_COLORS).forEach(function(fg) {
     if (ct === 0) return;
     var label = document.createElement('label');
     label.className = 'well-toggle';
-    label.innerHTML = '<input type="checkbox" checked data-tb="' + tb + '"> ' + tb + ' <span class="count">' + ct + '</span>';
+    var isDefault = DEFAULT_TIME_BUCKETS.indexOf(tb) >= 0;
+    label.innerHTML = '<input type="checkbox" ' + (isDefault ? 'checked' : '') + ' data-tb="' + tb + '"> ' + tb + ' <span class="count">' + ct + '</span>';
     label.querySelector('input').addEventListener('change', function() {
       if (this.checked) activeTimeBuckets.add(tb);
       else activeTimeBuckets.delete(tb);
