@@ -102,13 +102,6 @@ function buildDsuDataFromSheet() {
     });
   }
 
-  // Operator overrides
-  units.forEach(function(u) {
-    if (u.operator === 'OSTRICH') u.operator = 'CINCO';
-  });
-  var a38 = units.find(function(u) { return u.unit === 'A38'; });
-  if (a38) a38.operator = 'TERRITORY';
-
   // Commentary override for A40 (not in Google Sheet pivot tab)
   var a40 = units.find(function(u) { return u.unit === 'A40'; });
   if (a40) {
