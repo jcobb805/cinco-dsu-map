@@ -933,7 +933,7 @@ var CINCO_WELLS = ${JSON.stringify(cincoWells)};
     wells.forEach(function(w, i) {
       var opt = document.createElement('option');
       opt.value = JSON.stringify({ lat: w.lat, lng: w.lng, unit: w.unit });
-      var suffix = w.cat === 'duc' ? ' [DUC]' : w.cat === 'permit' ? ' [Permit]' : '';
+      var suffix = w.cat === 'duc' ? ' [DUC]' : w.cat === 'permit' ? ' [Permit]' : ' [Well]';
       opt.textContent = w.n + suffix + ' (Unit ' + w.unit + ')';
       select.appendChild(opt);
     });

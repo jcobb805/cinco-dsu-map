@@ -1245,7 +1245,7 @@ var CINCO_WELLS = [{"n":"JOSHUA DEETS 29-32 1HX","unit":"A38","fg":"Red Fork","o
     wells.forEach(function(w, i) {
       var opt = document.createElement('option');
       opt.value = JSON.stringify({ lat: w.lat, lng: w.lng, unit: w.unit });
-      var suffix = w.cat === 'duc' ? ' [DUC]' : w.cat === 'permit' ? ' [Permit]' : '';
+      var suffix = w.cat === 'duc' ? ' [DUC]' : w.cat === 'permit' ? ' [Permit]' : ' [Well]';
       opt.textContent = w.n + suffix + ' (Unit ' + w.unit + ')';
       select.appendChild(opt);
     });
