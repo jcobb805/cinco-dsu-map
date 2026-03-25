@@ -55,6 +55,9 @@ const newDSUs = [
 const dsuInsert = newDSUs.map(d => '  ' + d + ',').join('\n');
 html = html.replace('];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid', dsuInsert + '\n];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid');
 
+// Add section NMA for new units (from Section Shapefiles Table)
+html = html.replace('const SECTION_NMA = {', 'const SECTION_NMA = {\n  "26-17N-20W":560.0,"35-17N-20W":106.7,\n  "11-13N-23W":0,"14-13N-23W":68.4,\n  "1-14N-17W":132.4,"12-14N-17W":152.3,');
+
 // Updated units — NMA/WI/NRI changes from sheet
 html = html.replace('unit:"1075", nma:626.3, wi:0.48929, nri:0.38717', 'unit:"1075", nma:643.8, wi:0.50294, nri:0.39827');
 html = html.replace('unit:"902", nma:604.4, wi:0.47222, nri:0.37778', 'unit:"902", nma:641.1, wi:0.50086, nri:0.40069');
