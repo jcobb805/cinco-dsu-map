@@ -171,13 +171,15 @@ function computeUnitData(dsuData, wells, permits) {
     if (!unit) return;
     if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
     var recentBuckets = ['2023','2024','2025','2026'];
-    if (w.tb === 'DUC') unitActivity[unit].duc = true;
-    else if (recentBuckets.indexOf(w.tb) >= 0) {
+    if (w.tb === 'DUC') {
+      unitActivity[unit].duc = true;
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'duc' });
+    } else if (recentBuckets.indexOf(w.tb) >= 0) {
       unitActivity[unit].rcw = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, recent: true });
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'recent' });
     } else {
       unitActivity[unit].lcw = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, recent: false });
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, cat: 'legacy' });
     }
   });
 
@@ -188,6 +190,7 @@ function computeUnitData(dsuData, wells, permits) {
     if (!unit) return;
     if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
     unitActivity[unit].permit = true;
+    cincoWells.push({ n: p.n, unit: unit, fg: p.fg, op: p.op, lat: p.lat, lng: p.lng, cat: "permit" });
   });
 
   // Collect unique operators and assign colors
@@ -592,9 +595,9 @@ html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
   <!-- Map Controls (bottom-right): Shading, Activity Filter, Well Selector) -->
   <div id="map-controls">
     <div class="map-ctrl-box" id="cinco-well-selector">
-      <h5>Recent Wells on Cinco Units</h5>
-      <select id="cinco-well-recent"><option value="">Select a well...</option></select>
-      <h5 style="margin-top:8px;">Legacy Wells on Cinco Units</h5>
+      <h5>Recent Wells, DUCs &amp; Permits on Cinco Units</h5>
+      <select id="cinco-well-recent"><option value="">Select...</option></select>
+      <h5 style="margin-top:8px;">Legacy Wells on Cinco Units (pre-2023)</h5>
       <select id="cinco-well-legacy"><option value="">Select a well...</option></select>
     </div>
     <div class="map-ctrl-box">
@@ -930,7 +933,8 @@ var CINCO_WELLS = ${JSON.stringify(cincoWells)};
     wells.forEach(function(w, i) {
       var opt = document.createElement('option');
       opt.value = JSON.stringify({ lat: w.lat, lng: w.lng, unit: w.unit });
-      opt.textContent = w.n + ' (Unit ' + w.unit + ')';
+      var suffix = w.cat === 'duc' ? ' [DUC]' : w.cat === 'permit' ? ' [Permit]' : '';
+      opt.textContent = w.n + suffix + ' (Unit ' + w.unit + ')';
       select.appendChild(opt);
     });
     select.addEventListener('change', function() {
@@ -951,8 +955,8 @@ var CINCO_WELLS = ${JSON.stringify(cincoWells)};
     });
   }
 
-  var recentWells = CINCO_WELLS.filter(function(w) { return w.recent; });
-  var legacyWells = CINCO_WELLS.filter(function(w) { return !w.recent; });
+  var recentWells = CINCO_WELLS.filter(function(w) { return w.cat === 'recent' || w.cat === 'duc' || w.cat === 'permit'; });
+  var legacyWells = CINCO_WELLS.filter(function(w) { return w.cat === 'legacy'; });
   populateSelect('cinco-well-recent', recentWells);
   populateSelect('cinco-well-legacy', legacyWells);
 
