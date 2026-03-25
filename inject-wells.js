@@ -33,19 +33,40 @@ function parseCSV(text) {
 
 // ── Build DSU_DATA from Google Sheet CSVs ──
 function buildDsuDataFromSheet() {
-  // 1) Unit Pivot - All tab → numbered units with full commentary
   const pivotRows = parseCSV(fs.readFileSync('sheet_unit_pivot.csv', 'utf8'));
   // Cols: 0=Unit, 1=NMA, 2=WI, 3=NRI, 4=Operator, 5=Type, 6=North, 7=Middle, 8=South,
   //       9=Size, 10=UnitNo, 11=PrimaryTarget, 12=SecondaryTarget, 13=KeyOffsets,
   //       14=CherokeeTier, 15=RedForkTier, 16=Rank, 17=Comments, 18=DrillingCommentary
+
+  // Build STR→A-prefix unit lookup from main tab (Google Sheets CSV export drops A-prefix unit numbers)
+  const mainRows = parseCSV(fs.readFileSync('sheet_main.csv', 'utf8'));
+  const strToAUnit = {};
+  const aUnitsSeen = new Set();
+  for (let i = 1; i < mainRows.length; i++) {
+    const r = mainRows[i];
+    const unitNo = r[30];
+    if (!unitNo || !unitNo.startsWith('A') || aUnitsSeen.has(unitNo)) continue;
+    aUnitsSeen.add(unitNo);
+    const key = (r[31]||'') + '|' + (r[32]||'') + '|' + (r[33]||'');
+    strToAUnit[key] = unitNo;
+  }
+
   const units = [];
   const seen = new Set();
+
+  // Process ALL pivot rows (numbered + A-prefix)
   for (let i = 1; i < pivotRows.length; i++) {
     const r = pivotRows[i];
-    if (!r[0] || seen.has(r[0])) continue;
-    seen.add(r[0]);
+    let unitName = r[0];
+    // If unit number is empty, resolve via STR match to A-prefix unit
+    if (!unitName) {
+      const strKey = (r[6]||'') + '|' + (r[7]||'') + '|' + (r[8]||'');
+      unitName = strToAUnit[strKey] || '';
+    }
+    if (!unitName || seen.has(unitName)) continue;
+    seen.add(unitName);
     const u = {
-      unit: r[0],
+      unit: unitName,
       nma: Math.round((parseFloat(r[1]) || 0) * 10) / 10,
       wi: parseFloat(r[2]) || 0,
       nri: parseFloat(r[3]) || 0,
@@ -67,57 +88,22 @@ function buildDsuDataFromSheet() {
     units.push(u);
   }
 
-  // 2) Main tab (gid=0) → A-prefix units (aggregate from lease rows)
-  const mainRows = parseCSV(fs.readFileSync('sheet_main.csv', 'utf8'));
-  const aUnits = {};
-  for (let i = 1; i < mainRows.length; i++) {
-    const r = mainRows[i];
-    const unitNo = r[30]; // UNIT_NO column
-    if (!unitNo || !unitNo.startsWith('A') || seen.has(unitNo)) continue;
-    if (!aUnits[unitNo]) {
-      aUnits[unitNo] = {
-        unit: unitNo,
-        nma: 0, wi: 0, nri: 0,
-        operator: r[2] || '',
-        type: r[36] || 'Non-Op',
-        north: r[31] || '',
-        middle: r[32] || '',
-        south: r[33] || '',
-        unitSize: parseFloat(r[29]) || 0,
-      };
-    }
-    aUnits[unitNo].nma += parseFloat(r[12]) || 0; // Net Mineral Acres (lease-level)
-    aUnits[unitNo].wi += parseFloat(r[25]) || 0;
-    aUnits[unitNo].nri += parseFloat(r[26]) || 0;
-  }
-  for (const u of Object.values(aUnits)) {
-    u.nma = Math.round(u.nma * 10) / 10;
-    u.wi = Math.round(u.wi * 100000) / 100000;
-    u.nri = Math.round(u.nri * 100000) / 100000;
-    units.push(u);
-    seen.add(u.unit);
-  }
-
-  // 3) Also check main tab for numbered units NOT in pivot (shouldn't happen, but safety net)
+  // Safety net: pick up any A-prefix or other units in main tab not found in pivot
   for (let i = 1; i < mainRows.length; i++) {
     const r = mainRows[i];
     const unitNo = r[30];
     if (!unitNo || seen.has(unitNo)) continue;
-    if (!aUnits[unitNo]) {
-      // Aggregate like A-prefix
-      aUnits[unitNo] = {
-        unit: unitNo, nma: 0, wi: 0, nri: 0,
-        operator: r[2] || '', type: r[36] || 'Non-Op',
-        north: r[31] || '', middle: r[32] || '', south: r[33] || '',
-        unitSize: parseFloat(r[29]) || 0,
-      };
-    }
-    aUnits[unitNo].nma += parseFloat(r[12]) || 0;
-    aUnits[unitNo].wi += parseFloat(r[25]) || 0;
-    aUnits[unitNo].nri += parseFloat(r[26]) || 0;
+    seen.add(unitNo);
+    units.push({
+      unit: unitNo, nma: 0, wi: 0, nri: 0,
+      operator: r[2] || '', type: r[36] || 'Non-Op',
+      north: r[31] || '', middle: r[32] || '', south: r[33] || '',
+      unitSize: parseFloat(r[29]) || 0,
+    });
   }
 
-  console.log(`Sheet: ${units.length} DSU units (${pivotRows.length - 1} from pivot, ${Object.keys(aUnits).length} A-prefix from main tab)`);
+  console.log('Sheet: ' + units.length + ' DSU units (' + seen.size + ' total, ' +
+    units.filter(u => u.unit.startsWith('A')).length + ' A-prefix resolved from pivot)');
   return units;
 }
 
