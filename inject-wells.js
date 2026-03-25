@@ -161,8 +161,6 @@ var blmPLSS = L.esri.dynamicMapLayer({
   url: 'https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer',
   layers: [1, 2],
   opacity: 0.6,
-  bboxSR: 4326,
-  imageSR: 4326,
   dynamicLayers: [
     {id:1, source:{type:'mapLayer',mapLayerId:1}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[140,150,160,160],width:1.5}}},showLabels:false}},
     {id:2, source:{type:'mapLayer',mapLayerId:2}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[190,200,210,130],width:0.7}}},showLabels:false}}
@@ -274,7 +272,11 @@ const oldDsuPolygon = `function dsuPolygon(dsu) {
   ];
 }`;
 
-const newDsuPolygon = `function dsuPolygon(dsu) {
+const newDsuPolygon = `// Calibration offset (lat, lng) to align DSU polygons with BLM grid tiles
+var DSU_OFFSET_LAT = 0.0004;
+var DSU_OFFSET_LNG = 0.0000;
+
+function dsuPolygon(dsu) {
   const sections = [dsu.north, dsu.middle, dsu.south].filter(s => s && s.length > 0);
   if (sections.length === 0) return null;
 
@@ -285,7 +287,9 @@ const newDsuPolygon = `function dsuPolygon(dsu) {
     if (!p) return;
     const key = p.section + '-' + p.township + 'N-' + p.range + 'W';
     if (BLM_SECTION_POLYGONS[key]) {
-      BLM_SECTION_POLYGONS[key].forEach(ring => blmRings.push(ring));
+      BLM_SECTION_POLYGONS[key].forEach(ring => {
+        blmRings.push(ring.map(pt => [pt[0] + DSU_OFFSET_LAT, pt[1] + DSU_OFFSET_LNG]));
+      });
     }
   });
   if (blmRings.length > 0) return blmRings;
