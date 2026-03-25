@@ -501,7 +501,7 @@ html = html.replace('</style>', newCSS + '\n</style>');
 // Extra CSS for new features (shading toggle, activity filter, well selector)
 const extraCSS = `
   /* ── Shading Toggle & Activity Filter (bottom-left) ── */
-  #map-controls { position: absolute; left: 12px; bottom: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+  #map-controls { position: absolute; right: 12px; bottom: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
   .map-ctrl-box { background: rgba(255,255,255,0.95); border-radius: 8px; border: 1px solid #d1d9e0;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 8px 10px; font-size: 11px; min-width: 150px; }
   .map-ctrl-box h5 { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 6px 0; }
