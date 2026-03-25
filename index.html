@@ -260,8 +260,10 @@
   <!-- Map Controls (bottom-right): Shading, Activity Filter, Well Selector) -->
   <div id="map-controls">
     <div class="map-ctrl-box" id="cinco-well-selector">
-      <h5>Wells on Cinco Units</h5>
-      <select id="cinco-well-select"><option value="">Select a well...</option></select>
+      <h5>Recent Wells on Cinco Units</h5>
+      <select id="cinco-well-recent"><option value="">Select a well...</option></select>
+      <h5 style="margin-top:8px;">Legacy Wells on Cinco Units</h5>
+      <select id="cinco-well-legacy"><option value="">Select a well...</option></select>
     </div>
     <div class="map-ctrl-box">
       <h5>Unit Shading</h5>
@@ -271,7 +273,8 @@
     </div>
     <div class="map-ctrl-box">
       <h5>Unit Activity</h5>
-      <label class="ctrl-toggle"><input type="checkbox" id="filter-cw"> Completed Well</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-rcw"> Recently Completed Well</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-lcw"> Completed Well (pre-2023)</label>
       <label class="ctrl-toggle"><input type="checkbox" id="filter-duc"> DUC</label>
       <label class="ctrl-toggle"><input type="checkbox" id="filter-permit"> Active Permit</label>
     </div>
@@ -1185,13 +1188,14 @@ document.querySelectorAll('input[name="shading"]').forEach(function(radio) {
 // ═══════════════════════════════════════════════════════════════════════
 // Feature 2: Unit Activity Filter
 // ═══════════════════════════════════════════════════════════════════════
-var UNIT_ACTIVITY = {"27":{"cw":true,"duc":false,"permit":false},"28":{"cw":true,"duc":false,"permit":false},"30":{"cw":true,"duc":false,"permit":true},"45":{"cw":true,"duc":false,"permit":false},"60":{"cw":true,"duc":false,"permit":false},"234":{"cw":true,"duc":false,"permit":true},"366":{"cw":true,"duc":true,"permit":true},"440":{"cw":true,"duc":false,"permit":false},"587":{"cw":true,"duc":false,"permit":true},"649":{"cw":true,"duc":false,"permit":false},"902":{"cw":true,"duc":false,"permit":false},"1117":{"cw":true,"duc":true,"permit":true},"1334":{"cw":false,"duc":false,"permit":true},"A38":{"cw":false,"duc":true,"permit":true},"A37":{"cw":true,"duc":false,"permit":false},"A35":{"cw":true,"duc":false,"permit":false},"A32":{"cw":true,"duc":false,"permit":false},"A31":{"cw":true,"duc":false,"permit":false}};
+var UNIT_ACTIVITY = {"27":{"cw":false,"duc":false,"permit":false,"lcw":true},"28":{"cw":false,"duc":false,"permit":false,"lcw":true},"30":{"cw":false,"duc":false,"permit":true,"lcw":true},"45":{"cw":false,"duc":false,"permit":false,"lcw":true},"60":{"cw":false,"duc":false,"permit":false,"lcw":true},"234":{"cw":false,"duc":false,"permit":true,"rcw":true,"lcw":true},"366":{"cw":false,"duc":true,"permit":true,"lcw":true},"440":{"cw":false,"duc":false,"permit":false,"rcw":true},"587":{"cw":false,"duc":false,"permit":true,"rcw":true},"649":{"cw":false,"duc":false,"permit":false,"lcw":true},"902":{"cw":false,"duc":false,"permit":false,"lcw":true},"1117":{"cw":false,"duc":true,"permit":true,"lcw":true},"1334":{"cw":false,"duc":false,"permit":true},"A38":{"cw":false,"duc":true,"permit":true},"A37":{"cw":false,"duc":false,"permit":false,"rcw":true,"lcw":true},"A35":{"cw":false,"duc":false,"permit":false,"lcw":true},"A32":{"cw":false,"duc":false,"permit":false,"lcw":true},"A31":{"cw":false,"duc":false,"permit":false,"lcw":true}};
 
 function filterUnits() {
-  var filterCW = document.getElementById('filter-cw').checked;
+  var filterRCW = document.getElementById('filter-rcw').checked;
+  var filterLCW = document.getElementById('filter-lcw').checked;
   var filterDUC = document.getElementById('filter-duc').checked;
   var filterPermit = document.getElementById('filter-permit').checked;
-  var anyFilter = filterCW || filterDUC || filterPermit;
+  var anyFilter = filterRCW || filterLCW || filterDUC || filterPermit;
 
   DSU_DATA.forEach(function(dsu) {
     var layer = layers[dsu.unit];
@@ -1205,7 +1209,8 @@ function filterUnits() {
 
     var show = false;
     if (activity) {
-      if (filterCW && activity.cw) show = true;
+      if (filterRCW && activity.rcw) show = true;
+      if (filterLCW && activity.lcw) show = true;
       if (filterDUC && activity.duc) show = true;
       if (filterPermit && activity.permit) show = true;
     }
@@ -1218,43 +1223,53 @@ function filterUnits() {
   });
 }
 
-document.getElementById('filter-cw').addEventListener('change', filterUnits);
+document.getElementById('filter-rcw').addEventListener('change', filterUnits);
+document.getElementById('filter-lcw').addEventListener('change', filterUnits);
 document.getElementById('filter-duc').addEventListener('change', filterUnits);
 document.getElementById('filter-permit').addEventListener('change', filterUnits);
 
 // ═══════════════════════════════════════════════════════════════════════
 // Feature 3: Well Selection Dropdown
 // ═══════════════════════════════════════════════════════════════════════
-var CINCO_WELLS = [{"n":"PATSY 19/18 MD 1H","unit":"587","fg":"Cherokee","op":"MEWBOURNE OIL","lat":35.753371,"lng":-99.264996},{"n":"WANDA 30/31 DM 1H","unit":"587","fg":"Cherokee","op":"MEWBOURNE OIL","lat":35.75337,"lng":-99.264861},{"n":"OSPREY 1-10-15XH","unit":"A37","fg":"Other","op":"NADEL & GUSSMAN","lat":35.624965,"lng":-99.200691},{"n":"PUFFIN 1-4-9XH","unit":"440","fg":"Other","op":"NADEL & GUSSMAN","lat":35.637972,"lng":-99.227546},{"n":"BONHAM 1-33H","unit":"A35","fg":"Other","op":"WESTERN MOUNTAIN RESOURCES LLC","lat":35.467041,"lng":-99.101545},{"n":"MANNERING 1-15H","unit":"902","fg":"Cottage Grove","op":"MACH NATURAL RESOURCES LP","lat":35.76809,"lng":-98.99992},{"n":"ROWDY 3-13-19 1H","unit":"A37","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.625774,"lng":-99.20641},{"n":"JIM SHEPARD 1-34H","unit":"649","fg":"Cleveland","op":"RIDGEPOINT ENERGY PARTNERS, LLC","lat":35.639498,"lng":-99.098179},{"n":"GRAYS PEAK 1524 1-2H35H","unit":"234","fg":"Cherokee","op":"SANDRIDGE","lat":35.798618,"lng":-99.722447},{"n":"GRAYS PEAK 1524 2-2H35H","unit":"234","fg":"Cherokee","op":"SANDRIDGE","lat":35.798645,"lng":-99.722363},{"n":"GLASS 2-35-26-23CHX","unit":"234","fg":"Cherokee","op":"CRAWLEY PETROLEUM CORP","lat":35.82643,"lng":-99.716308},{"n":"GLASS 1-35-26-23 CHX","unit":"234","fg":"Cherokee","op":"CRAWLEY PETROLEUM CORP","lat":35.825825,"lng":-99.728538},{"n":"BEATY 11-1H","unit":"28","fg":"Tonkawa","op":"BEATY ENTERPRISES LLC","lat":35.623685,"lng":-99.623577},{"n":"BEATY 2-1H","unit":"1117","fg":"Tonkawa","op":"REVOLUTION RESOURCES","lat":35.624725,"lng":-99.623677},{"n":"VESSELS 35-16-24 1H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.812891,"lng":-99.722552},{"n":"IO 26 1H","unit":"A32","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.653998,"lng":-99.621932},{"n":"BEATY 2-1H","unit":"1117","fg":"Tonkawa","op":"SAMSON RESOURCES II","lat":35.639547,"lng":-99.621716},{"n":"MADDUX 2H-28","unit":"45","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.665087,"lng":-99.64533},{"n":"BURNS 1H-6","unit":"27","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.62485,"lng":-99.68594},{"n":"BURNS 5-13-23 1H","unit":"A31","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.63824,"lng":-99.67185},{"n":"BOWMAN 1-34HD","unit":"60","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.72661,"lng":-99.7324},{"n":"MCGARRAUGH 1H-35","unit":"A32","fg":"Cleveland","op":"PRESIDIO PETROLEUM","lat":35.65415,"lng":-99.6174},{"n":"VESSELS 35-16-24 3H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.813172,"lng":-99.718912},{"n":"ORGAIN 35 1H","unit":"1117","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652745,"lng":-99.613159},{"n":"JACKIE 14-15-24 1H","unit":"366","fg":"Tonkawa","op":"DIVERSIFIED ENERGY","lat":35.769699,"lng":-99.727582},{"n":"GRAYS PEAK 1-2H","unit":"234","fg":"Tonkawa","op":"DIVERSIFIED ENERGY","lat":35.798699,"lng":-99.722445},{"n":"THOMPSON 32-14-23 1H","unit":"A31","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.65286,"lng":-99.661492},{"n":"CAFFEY 33 1H","unit":"45","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652048,"lng":-99.645374},{"n":"VESSELS 35-16-24 2H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.81301,"lng":-99.72827},{"n":"MADDUX 3-21H","unit":"45","fg":"Other","op":"GBK CORP","lat":35.666548,"lng":-99.655241},{"n":"LOVETT 5-13-23 1H","unit":"A31","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.637197,"lng":-99.671392},{"n":"S.F. MADDUX 28-14-23 1H","unit":"45","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.666941,"lng":-99.656535},{"n":"FRANK 1-34HA","unit":"60","fg":"Other","op":"PRESIDIO PETROLEUM","lat":35.72656,"lng":-99.746106},{"n":"POLARIS 35-16-24 1H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.811674,"lng":-99.714257},{"n":"BURNS 1H-7","unit":"27","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.624983,"lng":-99.68545},{"n":"GWARTNEY 34 1H","unit":"30","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652639,"lng":-99.63457}];
+var CINCO_WELLS = [{"n":"PATSY 19/18 MD 1H","unit":"587","fg":"Cherokee","op":"MEWBOURNE OIL","lat":35.753371,"lng":-99.264996,"recent":true},{"n":"WANDA 30/31 DM 1H","unit":"587","fg":"Cherokee","op":"MEWBOURNE OIL","lat":35.75337,"lng":-99.264861,"recent":true},{"n":"OSPREY 1-10-15XH","unit":"A37","fg":"Other","op":"NADEL & GUSSMAN","lat":35.624965,"lng":-99.200691,"recent":true},{"n":"PUFFIN 1-4-9XH","unit":"440","fg":"Other","op":"NADEL & GUSSMAN","lat":35.637972,"lng":-99.227546,"recent":true},{"n":"BONHAM 1-33H","unit":"A35","fg":"Other","op":"WESTERN MOUNTAIN RESOURCES LLC","lat":35.467041,"lng":-99.101545,"recent":false},{"n":"MANNERING 1-15H","unit":"902","fg":"Cottage Grove","op":"MACH NATURAL RESOURCES LP","lat":35.76809,"lng":-98.99992,"recent":false},{"n":"ROWDY 3-13-19 1H","unit":"A37","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.625774,"lng":-99.20641,"recent":false},{"n":"JIM SHEPARD 1-34H","unit":"649","fg":"Cleveland","op":"RIDGEPOINT ENERGY PARTNERS, LLC","lat":35.639498,"lng":-99.098179,"recent":false},{"n":"GRAYS PEAK 1524 1-2H35H","unit":"234","fg":"Cherokee","op":"SANDRIDGE","lat":35.798618,"lng":-99.722447,"recent":true},{"n":"GRAYS PEAK 1524 2-2H35H","unit":"234","fg":"Cherokee","op":"SANDRIDGE","lat":35.798645,"lng":-99.722363,"recent":true},{"n":"GLASS 2-35-26-23CHX","unit":"234","fg":"Cherokee","op":"CRAWLEY PETROLEUM CORP","lat":35.82643,"lng":-99.716308,"recent":true},{"n":"GLASS 1-35-26-23 CHX","unit":"234","fg":"Cherokee","op":"CRAWLEY PETROLEUM CORP","lat":35.825825,"lng":-99.728538,"recent":true},{"n":"BEATY 11-1H","unit":"28","fg":"Tonkawa","op":"BEATY ENTERPRISES LLC","lat":35.623685,"lng":-99.623577,"recent":false},{"n":"BEATY 2-1H","unit":"1117","fg":"Tonkawa","op":"REVOLUTION RESOURCES","lat":35.624725,"lng":-99.623677,"recent":false},{"n":"VESSELS 35-16-24 1H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.812891,"lng":-99.722552,"recent":false},{"n":"IO 26 1H","unit":"A32","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.653998,"lng":-99.621932,"recent":false},{"n":"BEATY 2-1H","unit":"1117","fg":"Tonkawa","op":"SAMSON RESOURCES II","lat":35.639547,"lng":-99.621716,"recent":false},{"n":"MADDUX 2H-28","unit":"45","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.665087,"lng":-99.64533,"recent":false},{"n":"BURNS 1H-6","unit":"27","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.62485,"lng":-99.68594,"recent":false},{"n":"BURNS 5-13-23 1H","unit":"A31","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.63824,"lng":-99.67185,"recent":false},{"n":"BOWMAN 1-34HD","unit":"60","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.72661,"lng":-99.7324,"recent":false},{"n":"MCGARRAUGH 1H-35","unit":"A32","fg":"Cleveland","op":"PRESIDIO PETROLEUM","lat":35.65415,"lng":-99.6174,"recent":false},{"n":"VESSELS 35-16-24 3H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.813172,"lng":-99.718912,"recent":false},{"n":"ORGAIN 35 1H","unit":"1117","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652745,"lng":-99.613159,"recent":false},{"n":"JACKIE 14-15-24 1H","unit":"366","fg":"Tonkawa","op":"DIVERSIFIED ENERGY","lat":35.769699,"lng":-99.727582,"recent":false},{"n":"GRAYS PEAK 1-2H","unit":"234","fg":"Tonkawa","op":"DIVERSIFIED ENERGY","lat":35.798699,"lng":-99.722445,"recent":false},{"n":"THOMPSON 32-14-23 1H","unit":"A31","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.65286,"lng":-99.661492,"recent":false},{"n":"CAFFEY 33 1H","unit":"45","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652048,"lng":-99.645374,"recent":false},{"n":"VESSELS 35-16-24 2H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.81301,"lng":-99.72827,"recent":false},{"n":"MADDUX 3-21H","unit":"45","fg":"Other","op":"GBK CORP","lat":35.666548,"lng":-99.655241,"recent":false},{"n":"LOVETT 5-13-23 1H","unit":"A31","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.637197,"lng":-99.671392,"recent":false},{"n":"S.F. MADDUX 28-14-23 1H","unit":"45","fg":"Cleveland","op":"DIVERSIFIED ENERGY","lat":35.666941,"lng":-99.656535,"recent":false},{"n":"FRANK 1-34HA","unit":"60","fg":"Other","op":"PRESIDIO PETROLEUM","lat":35.72656,"lng":-99.746106,"recent":false},{"n":"POLARIS 35-16-24 1H","unit":"234","fg":"Other","op":"DIVERSIFIED ENERGY","lat":35.811674,"lng":-99.714257,"recent":false},{"n":"BURNS 1H-7","unit":"27","fg":"Tonkawa","op":"PRESIDIO PETROLEUM","lat":35.624983,"lng":-99.68545,"recent":false},{"n":"GWARTNEY 34 1H","unit":"30","fg":"Tonkawa","op":"MEWBOURNE OIL","lat":35.652639,"lng":-99.63457,"recent":false}];
 
 (function() {
-  var select = document.getElementById('cinco-well-select');
   CINCO_WELLS.sort(function(a, b) {
     if (a.unit < b.unit) return -1;
     if (a.unit > b.unit) return 1;
     return a.n.localeCompare(b.n);
   });
-  CINCO_WELLS.forEach(function(w, i) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = w.n + ' (Unit ' + w.unit + ')';
-    select.appendChild(opt);
-  });
 
-  select.addEventListener('change', function() {
-    if (!this.value) return;
-    var w = CINCO_WELLS[parseInt(this.value)];
-    if (!w) return;
-    map.flyTo([w.lat, w.lng], 13, { duration: 0.8 });
-    var layer = layers[w.unit];
-    if (layer) {
-      layer.poly.setStyle({ fillOpacity: 0.9 });
-      setTimeout(function() {
-        layer.poly.setStyle({ fillOpacity: nmaOpacity(DSU_DATA.find(function(d) { return d.unit === w.unit; }).nma) });
-      }, 800);
-      openDetail(DSU_DATA.find(function(d) { return d.unit === w.unit; }));
-    }
-  });
+  function populateSelect(id, wells) {
+    var select = document.getElementById(id);
+    wells.forEach(function(w, i) {
+      var opt = document.createElement('option');
+      opt.value = JSON.stringify({ lat: w.lat, lng: w.lng, unit: w.unit });
+      opt.textContent = w.n + ' (Unit ' + w.unit + ')';
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', function() {
+      if (!this.value) return;
+      var d = JSON.parse(this.value);
+      map.flyTo([d.lat, d.lng], 13, { duration: 0.8 });
+      var layer = layers[d.unit];
+      if (layer) {
+        layer.poly.setStyle({ fillOpacity: 0.9 });
+        setTimeout(function() {
+          layer.poly.setStyle({ fillOpacity: nmaOpacity(DSU_DATA.find(function(u) { return u.unit === d.unit; }).nma) });
+        }, 800);
+        openDetail(DSU_DATA.find(function(u) { return u.unit === d.unit; }));
+      }
+      // Reset the other dropdown
+      var otherId = id === 'cinco-well-recent' ? 'cinco-well-legacy' : 'cinco-well-recent';
+      document.getElementById(otherId).value = '';
+    });
+  }
+
+  var recentWells = CINCO_WELLS.filter(function(w) { return w.recent; });
+  var legacyWells = CINCO_WELLS.filter(function(w) { return !w.recent; });
+  populateSelect('cinco-well-recent', recentWells);
+  populateSelect('cinco-well-legacy', legacyWells);
 
   // Well selector is now inside map-controls (no dynamic positioning needed)
 

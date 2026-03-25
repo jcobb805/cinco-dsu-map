@@ -170,10 +170,14 @@ function computeUnitData(dsuData, wells, permits) {
     const unit = secToUnit[norm];
     if (!unit) return;
     if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
+    var recentBuckets = ['2023','2024','2025','2026'];
     if (w.tb === 'DUC') unitActivity[unit].duc = true;
-    else {
-      unitActivity[unit].cw = true;
-      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng });
+    else if (recentBuckets.indexOf(w.tb) >= 0) {
+      unitActivity[unit].rcw = true;
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, recent: true });
+    } else {
+      unitActivity[unit].lcw = true;
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng, recent: false });
     }
   });
 
@@ -588,8 +592,10 @@ html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
   <!-- Map Controls (bottom-right): Shading, Activity Filter, Well Selector) -->
   <div id="map-controls">
     <div class="map-ctrl-box" id="cinco-well-selector">
-      <h5>Wells on Cinco Units</h5>
-      <select id="cinco-well-select"><option value="">Select a well...</option></select>
+      <h5>Recent Wells on Cinco Units</h5>
+      <select id="cinco-well-recent"><option value="">Select a well...</option></select>
+      <h5 style="margin-top:8px;">Legacy Wells on Cinco Units</h5>
+      <select id="cinco-well-legacy"><option value="">Select a well...</option></select>
     </div>
     <div class="map-ctrl-box">
       <h5>Unit Shading</h5>
@@ -599,7 +605,8 @@ html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
     </div>
     <div class="map-ctrl-box">
       <h5>Unit Activity</h5>
-      <label class="ctrl-toggle"><input type="checkbox" id="filter-cw"> Completed Well</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-rcw"> Recently Completed Well</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-lcw"> Completed Well (pre-2023)</label>
       <label class="ctrl-toggle"><input type="checkbox" id="filter-duc"> DUC</label>
       <label class="ctrl-toggle"><input type="checkbox" id="filter-permit"> Active Permit</label>
     </div>
@@ -869,10 +876,11 @@ document.querySelectorAll('input[name="shading"]').forEach(function(radio) {
 var UNIT_ACTIVITY = ${JSON.stringify(unitActivity)};
 
 function filterUnits() {
-  var filterCW = document.getElementById('filter-cw').checked;
+  var filterRCW = document.getElementById('filter-rcw').checked;
+  var filterLCW = document.getElementById('filter-lcw').checked;
   var filterDUC = document.getElementById('filter-duc').checked;
   var filterPermit = document.getElementById('filter-permit').checked;
-  var anyFilter = filterCW || filterDUC || filterPermit;
+  var anyFilter = filterRCW || filterLCW || filterDUC || filterPermit;
 
   DSU_DATA.forEach(function(dsu) {
     var layer = layers[dsu.unit];
@@ -886,7 +894,8 @@ function filterUnits() {
 
     var show = false;
     if (activity) {
-      if (filterCW && activity.cw) show = true;
+      if (filterRCW && activity.rcw) show = true;
+      if (filterLCW && activity.lcw) show = true;
       if (filterDUC && activity.duc) show = true;
       if (filterPermit && activity.permit) show = true;
     }
@@ -899,7 +908,8 @@ function filterUnits() {
   });
 }
 
-document.getElementById('filter-cw').addEventListener('change', filterUnits);
+document.getElementById('filter-rcw').addEventListener('change', filterUnits);
+document.getElementById('filter-lcw').addEventListener('change', filterUnits);
 document.getElementById('filter-duc').addEventListener('change', filterUnits);
 document.getElementById('filter-permit').addEventListener('change', filterUnits);
 
@@ -909,33 +919,42 @@ document.getElementById('filter-permit').addEventListener('change', filterUnits)
 var CINCO_WELLS = ${JSON.stringify(cincoWells)};
 
 (function() {
-  var select = document.getElementById('cinco-well-select');
   CINCO_WELLS.sort(function(a, b) {
     if (a.unit < b.unit) return -1;
     if (a.unit > b.unit) return 1;
     return a.n.localeCompare(b.n);
   });
-  CINCO_WELLS.forEach(function(w, i) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = w.n + ' (Unit ' + w.unit + ')';
-    select.appendChild(opt);
-  });
 
-  select.addEventListener('change', function() {
-    if (!this.value) return;
-    var w = CINCO_WELLS[parseInt(this.value)];
-    if (!w) return;
-    map.flyTo([w.lat, w.lng], 13, { duration: 0.8 });
-    var layer = layers[w.unit];
-    if (layer) {
-      layer.poly.setStyle({ fillOpacity: 0.9 });
-      setTimeout(function() {
-        layer.poly.setStyle({ fillOpacity: nmaOpacity(DSU_DATA.find(function(d) { return d.unit === w.unit; }).nma) });
-      }, 800);
-      openDetail(DSU_DATA.find(function(d) { return d.unit === w.unit; }));
-    }
-  });
+  function populateSelect(id, wells) {
+    var select = document.getElementById(id);
+    wells.forEach(function(w, i) {
+      var opt = document.createElement('option');
+      opt.value = JSON.stringify({ lat: w.lat, lng: w.lng, unit: w.unit });
+      opt.textContent = w.n + ' (Unit ' + w.unit + ')';
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', function() {
+      if (!this.value) return;
+      var d = JSON.parse(this.value);
+      map.flyTo([d.lat, d.lng], 13, { duration: 0.8 });
+      var layer = layers[d.unit];
+      if (layer) {
+        layer.poly.setStyle({ fillOpacity: 0.9 });
+        setTimeout(function() {
+          layer.poly.setStyle({ fillOpacity: nmaOpacity(DSU_DATA.find(function(u) { return u.unit === d.unit; }).nma) });
+        }, 800);
+        openDetail(DSU_DATA.find(function(u) { return u.unit === d.unit; }));
+      }
+      // Reset the other dropdown
+      var otherId = id === 'cinco-well-recent' ? 'cinco-well-legacy' : 'cinco-well-recent';
+      document.getElementById(otherId).value = '';
+    });
+  }
+
+  var recentWells = CINCO_WELLS.filter(function(w) { return w.recent; });
+  var legacyWells = CINCO_WELLS.filter(function(w) { return !w.recent; });
+  populateSelect('cinco-well-recent', recentWells);
+  populateSelect('cinco-well-legacy', legacyWells);
 
   // Well selector is now inside map-controls (no dynamic positioning needed)
 
