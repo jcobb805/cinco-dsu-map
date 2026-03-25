@@ -201,7 +201,16 @@ function computeUnitData(dsuData, wells, permits) {
   let idx = 0;
   [...opSet].sort().forEach(op => { opColors[op] = OP_PALETTE[idx % OP_PALETTE.length]; idx++; });
 
-  console.log('Activity: ' + Object.keys(unitActivity).length + ' units with wells/permits, ' + cincoWells.length + ' Cinco wells');
+  // Deduplicate cincoWells by name+unit (prefer well > duc > permit)
+  var catPriority = { recent: 0, legacy: 1, duc: 2, permit: 3 };
+  var seen = {};
+  cincoWells.forEach(function(w) {
+    var key = w.n + '|' + w.unit;
+    if (!seen[key] || catPriority[w.cat] < catPriority[seen[key].cat]) seen[key] = w;
+  });
+  cincoWells.length = 0;
+  Object.values(seen).forEach(function(w) { cincoWells.push(w); });
+  console.log('Activity: ' + Object.keys(unitActivity).length + ' units with wells/permits, ' + cincoWells.length + ' Cinco wells (deduped)');
   return { unitActivity, cincoWells, opColors };
 }
 
