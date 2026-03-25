@@ -39,15 +39,25 @@ var _baseMaps = { 'Map': voyagerBase, 'Dark': darkBase, 'Topo': topoBase, 'Satel
 
 html = html.replace(oldBasemap, newBasemap);
 
-// ── 0a. Add new DSU units not in the base HTML ──
+// ── 0a. Add new DSU units and update changed units ──
+// New units
 const newDSUs = [
-  `{ unit:"28", nma:0, wi:0.05344, nri:0.04168, operator:"DEH 1", type:"Non-Op", north:"11-13N-23W", middle:"", south:"14-13N-23W", unitSize:1280 }`,
-  `{ unit:"522", nma:0, wi:0.14829, nri:0.11912, operator:"DEH_Cinco", type:"Non-Op", north:"1-14N-17W", middle:"12-14N-17W", south:"13-14N-17W", unitSize:1920 }`,
-  `{ unit:"A40", nma:0, wi:0.52083, nri:0.41667, operator:"DEH_Cinco", type:"Potential Drillable", north:"26-17N-20W", middle:"", south:"35-17N-20W", unitSize:1280 }`,
+  `{ unit:"28", nma:68.4, wi:0.05344, nri:0.04168, operator:"CRAWLEY", type:"Non-Op", north:"11-13N-23W", middle:"", south:"14-13N-23W", unitSize:1280 }`,
+  `{ unit:"522", nma:284.7, wi:0.14829, nri:0.11912, operator:"ANTHEM", type:"Potential Drillable", north:"1-14N-17W", middle:"12-14N-17W", south:"13-14N-17W", unitSize:1920 }`,
+  `{ unit:"A40", nma:666.7, wi:0.52083, nri:0.41667, operator:"DEH_Cinco", type:"Potential Drillable", north:"26-17N-20W", middle:"", south:"35-17N-20W", unitSize:1280 }`,
 ];
-// Insert before the closing ]; of DSU_DATA
 const dsuInsert = newDSUs.map(d => '  ' + d + ',').join('\n');
 html = html.replace('];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid', dsuInsert + '\n];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid');
+
+// Updated units — NMA/WI/NRI changes from sheet
+html = html.replace('unit:"1075", nma:626.3, wi:0.48929, nri:0.38717', 'unit:"1075", nma:643.8, wi:0.50294, nri:0.39827');
+html = html.replace('unit:"902", nma:604.4, wi:0.47222, nri:0.37778', 'unit:"902", nma:641.1, wi:0.50086, nri:0.40069');
+html = html.replace('unit:"1080", nma:560.2, wi:0.43768, nri:0.34964', 'unit:"1080", nma:573.6, wi:0.44810, nri:0.35798');
+html = html.replace('unit:"648", nma:353.7, wi:0.27631, nri:0.22235', 'unit:"648", nma:391.4, wi:0.30580, nri:0.24594');
+html = html.replace('unit:"1117", nma:156.7, wi:0.12239, nri:0.09358', 'unit:"1117", nma:136.0, wi:0.10625, nri:0.08124');
+html = html.replace('unit:"A32", nma:91.1, wi:0.04743, nri:0.03742', 'unit:"A32", nma:22.7, wi:0.01180, nri:0.00964');
+// Unit 638 type change
+html = html.replace('unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Potential Drillable"', 'unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Non-Op"');
 
 // ── 0b. Replace computed PLSS grid with BLM official PLSS tile overlay ──
 // Remove the entire computed grid section and replace with BLM WMS layer
