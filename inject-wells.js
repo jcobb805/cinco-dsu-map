@@ -201,6 +201,11 @@ function computeUnitData(dsuData, wells, permits) {
   let idx = 0;
   [...opSet].sort().forEach(op => { opColors[op] = OP_PALETTE[idx % OP_PALETTE.length]; idx++; });
 
+  // Manual overrides for wells with wrong surface STR
+  cincoWells.forEach(function(w) {
+    if (w.n === "BEATY 1-2-11-14CHX" && w.unit === "1117") w.unit = "28";
+  });
+
   // Deduplicate cincoWells by name+unit (prefer well > duc > permit)
   var catPriority = { recent: 0, legacy: 1, duc: 2, permit: 3 };
   var seen = {};
