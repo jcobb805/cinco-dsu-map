@@ -10,6 +10,12 @@ const { execSync } = require('child_process');
 // Always start from the clean base
 let html = execSync('git show be57c5a:index.html', { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
 
+// Inject esri-leaflet script after leaflet.js
+html = html.replace(
+  '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>',
+  '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>\n<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>'
+);
+
 const wellData = JSON.parse(fs.readFileSync('wells_map_data.json', 'utf8'));
 const rigData = JSON.parse(fs.readFileSync('rigs_map_data.json', 'utf8'));
 const permitData = JSON.parse(fs.readFileSync('permits_map_data.json', 'utf8'));
@@ -149,39 +155,16 @@ map.on('zoomend', updateGridVisibility);
 updateGridVisibility();`;
 
 const newGridBlock = `// ═══════════════════════════════════════════════════════════════════════
-// PLSS Grid Overlay — BLM Official Survey (geometry only, no labels)
-// Uses ArcGIS dynamic export with custom renderer to suppress server labels
+// PLSS Grid Overlay — BLM Official Survey via esri-leaflet
 // ═══════════════════════════════════════════════════════════════════════
-var BLMGridLayer = L.TileLayer.extend({
-  getTileUrl: function(coords) {
-    var map = this._map;
-    var tileSize = this.getTileSize();
-    var nwPoint = coords.scaleBy(tileSize);
-    var sePoint = nwPoint.add(tileSize);
-    // Convert tile pixel coords to lat/lng, then project to EPSG:3857
-    var nw = map.options.crs.pointToLatLng(nwPoint, coords.z);
-    var se = map.options.crs.pointToLatLng(sePoint, coords.z);
-    var nw3857 = L.CRS.EPSG3857.project(nw);
-    var se3857 = L.CRS.EPSG3857.project(se);
-    var bbox = [
-      Math.min(nw3857.x, se3857.x), Math.min(nw3857.y, se3857.y),
-      Math.max(nw3857.x, se3857.x), Math.max(nw3857.y, se3857.y)
-    ].join(',');
-    var dl = JSON.stringify([
-      {id:1, source:{type:'mapLayer',mapLayerId:1}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[140,150,160,160],width:1.5}}},showLabels:false}},
-      {id:2, source:{type:'mapLayer',mapLayerId:2}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[190,200,210,130],width:0.7}}},showLabels:false}}
-    ]);
-    return 'https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/export' +
-      '?bbox=' + bbox + '&size=' + tileSize.x + ',' + tileSize.y +
-      '&format=png32&transparent=true&bboxSR=3857&imageSR=3857' +
-      '&dynamicLayers=' + encodeURIComponent(dl) + '&f=image';
-  }
-});
-
-var blmPLSS = new BLMGridLayer('', {
-  maxZoom: 19,
-  attribution: 'PLSS: BLM',
-  opacity: 0.6
+var blmPLSS = L.esri.dynamicMapLayer({
+  url: 'https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer',
+  layers: [1, 2],
+  opacity: 0.6,
+  dynamicLayers: [
+    {id:1, source:{type:'mapLayer',mapLayerId:1}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[140,150,160,160],width:1.5}}},showLabels:false}},
+    {id:2, source:{type:'mapLayer',mapLayerId:2}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[190,200,210,130],width:0.7}}},showLabels:false}}
+  ]
 }).addTo(map);
 
 L.control.layers(
