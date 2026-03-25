@@ -501,7 +501,7 @@ html = html.replace('</style>', newCSS + '\n</style>');
 // Extra CSS for new features (shading toggle, activity filter, well selector)
 const extraCSS = `
   /* ── Shading Toggle & Activity Filter (bottom-left) ── */
-  #map-controls { position: absolute; right: 12px; bottom: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+  #map-controls { position: absolute; right: 12px; bottom: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; pointer-events: auto; }
   .map-ctrl-box { background: rgba(255,255,255,0.95); border-radius: 8px; border: 1px solid #d1d9e0;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 8px 10px; font-size: 11px; min-width: 150px; }
   .map-ctrl-box h5 { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 6px 0; }
@@ -515,10 +515,7 @@ const extraCSS = `
   .op-legend-item { display: flex; align-items: center; gap: 5px; padding: 1px 0; font-size: 10px; color: #1f2328; }
   .op-legend-swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
   /* ── Well Selector ── */
-  #cinco-well-selector { position: absolute; left: 12px; z-index: 1000; background: rgba(255,255,255,0.95);
-    border-radius: 8px; border: 1px solid #d1d9e0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    padding: 8px 10px; width: 220px; font-size: 11px; }
-  #cinco-well-selector h5 { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 6px 0; }
+  #cinco-well-selector { font-size: 11px; }
   #cinco-well-selector select { width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid #d1d9e0;
     border-radius: 4px; background: #fff; color: #1f2328; cursor: pointer; }
 `;
@@ -576,8 +573,12 @@ const slicerHTML = `
 
 // Insert right before the map div (alongside rank slicers, inside #app)
 html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
-  <!-- Map Controls (bottom-left): Shading Toggle + Activity Filter -->
+  <!-- Map Controls (bottom-right): Shading, Activity Filter, Well Selector) -->
   <div id="map-controls">
+    <div class="map-ctrl-box" id="cinco-well-selector">
+      <h5>Wells on Cinco Units</h5>
+      <select id="cinco-well-select"><option value="">Select a well...</option></select>
+    </div>
     <div class="map-ctrl-box">
       <h5>Unit Shading</h5>
       <label class="ctrl-toggle"><input type="radio" name="shading" value="status" checked> By Status</label>
@@ -590,11 +591,6 @@ html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
       <label class="ctrl-toggle"><input type="checkbox" id="filter-duc"> DUC</label>
       <label class="ctrl-toggle"><input type="checkbox" id="filter-permit"> Active Permit</label>
     </div>
-  </div>
-  <!-- Well Selector -->
-  <div id="cinco-well-selector">
-    <h5>Wells on Cinco Units</h5>
-    <select id="cinco-well-select"><option value="">Select a well...</option></select>
   </div>
 ` + '\n  <!-- Map -->\n  <div id="map"></div>');
 
@@ -929,16 +925,7 @@ var CINCO_WELLS = ${JSON.stringify(cincoWells)};
     }
   });
 
-  // Position selector below potential drillable slicer
-  var potEl = document.getElementById('rank-slicer-potential');
-  var selEl = document.getElementById('cinco-well-selector');
-  function positionSelector() {
-    var rect = potEl.getBoundingClientRect();
-    var mapRect = document.getElementById('map').getBoundingClientRect();
-    selEl.style.top = (rect.bottom - mapRect.top + 8) + 'px';
-  }
-  positionSelector();
-  window.addEventListener('resize', positionSelector);
+  // Well selector is now inside map-controls (no dynamic positioning needed)
 })();
 
 `;
