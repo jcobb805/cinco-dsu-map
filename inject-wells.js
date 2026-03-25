@@ -160,6 +160,20 @@ function computeUnitData(dsuData, wells, permits) {
     return { section: parseInt(m[1]), township: parseInt(m[2]), range: parseInt(m[3]) };
   }
 
+  // Only include sections where Cinco has NMA
+  var sectionNma = JSON.parse(fs.readFileSync('sheet_section_nma.csv', 'utf8').substring(0, 0) || '{}');
+  // Build section NMA lookup from sheet
+  var nmaRows = parseCSV(fs.readFileSync('sheet_section_nma.csv', 'utf8'));
+  var sectionNmaLookup = {};
+  for (var ni = 1; ni < nmaRows.length; ni++) {
+    var nr = nmaRows[ni];
+    if (!nr[3] || !nr[1] || !nr[2]) continue;
+    var nSec = String(parseInt(nr[3]));
+    var nKey = nSec + '-' + nr[1] + '-' + nr[2];
+    var nVal = parseFloat(nr[4]) || 0;
+    if (nVal > 0) sectionNmaLookup[nKey] = nVal;
+  }
+
   var dsuPolygons = {};
   dsuData.forEach(function(dsu) {
     var rings = [];
@@ -167,6 +181,8 @@ function computeUnitData(dsuData, wells, permits) {
       var p = parseSectionTownshipRange(str);
       if (!p) return;
       var key = p.section + '-' + p.township + 'N-' + p.range + 'W';
+      // Only include this section if we have NMA in it
+      if (!sectionNmaLookup[key]) return;
       if (blmPolygons[key]) {
         blmPolygons[key].forEach(function(ring) {
           rings.push(ring.map(function(pt) { return [pt[0] + DSU_OFFSET_LAT, pt[1]]; }));
