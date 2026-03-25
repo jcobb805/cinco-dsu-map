@@ -7,6 +7,137 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
+// ── CSV parser (handles quoted fields with commas) ──
+function parseCSV(text) {
+  const rows = []; let row = []; let field = ''; let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(field.trim()); field = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(field.trim()); field = '';
+        if (row.length > 1 && row.some(f => f)) rows.push(row);
+        row = [];
+      } else field += c;
+    }
+  }
+  if (field || row.length) { row.push(field.trim()); rows.push(row); }
+  return rows;
+}
+
+// ── Build DSU_DATA from Google Sheet CSVs ──
+function buildDsuDataFromSheet() {
+  // 1) Unit Pivot - All tab → numbered units with full commentary
+  const pivotRows = parseCSV(fs.readFileSync('sheet_unit_pivot.csv', 'utf8'));
+  // Cols: 0=Unit, 1=NMA, 2=WI, 3=NRI, 4=Operator, 5=Type, 6=North, 7=Middle, 8=South,
+  //       9=Size, 10=UnitNo, 11=PrimaryTarget, 12=SecondaryTarget, 13=KeyOffsets,
+  //       14=CherokeeTier, 15=RedForkTier, 16=Rank, 17=Comments, 18=DrillingCommentary
+  const units = [];
+  const seen = new Set();
+  for (let i = 1; i < pivotRows.length; i++) {
+    const r = pivotRows[i];
+    if (!r[0] || seen.has(r[0])) continue;
+    seen.add(r[0]);
+    const u = {
+      unit: r[0],
+      nma: Math.round((parseFloat(r[1]) || 0) * 10) / 10,
+      wi: parseFloat(r[2]) || 0,
+      nri: parseFloat(r[3]) || 0,
+      operator: r[4] || '',
+      type: r[5] || 'Non-Op',
+      north: r[6] || '',
+      middle: r[7] || '',
+      south: r[8] || '',
+      unitSize: parseFloat(r[9]) || 0,
+    };
+    if (r[11]) u.primaryTarget = r[11];
+    if (r[12]) u.secondaryTarget = r[12];
+    if (r[13]) u.keyOffsets = r[13];
+    if (r[14]) u.cherokeeTier = parseInt(r[14]) || 0;
+    if (r[15]) u.redForkTier = parseInt(r[15]) || 0;
+    if (r[16]) u.rank = parseInt(r[16]) || 0;
+    if (r[17]) u.comments = r[17];
+    if (r[18]) u.drillingCommentary = r[18];
+    units.push(u);
+  }
+
+  // 2) Main tab (gid=0) → A-prefix units (aggregate from lease rows)
+  const mainRows = parseCSV(fs.readFileSync('sheet_main.csv', 'utf8'));
+  const aUnits = {};
+  for (let i = 1; i < mainRows.length; i++) {
+    const r = mainRows[i];
+    const unitNo = r[30]; // UNIT_NO column
+    if (!unitNo || !unitNo.startsWith('A') || seen.has(unitNo)) continue;
+    if (!aUnits[unitNo]) {
+      aUnits[unitNo] = {
+        unit: unitNo,
+        nma: 0, wi: 0, nri: 0,
+        operator: r[2] || '',
+        type: r[36] || 'Non-Op',
+        north: r[31] || '',
+        middle: r[32] || '',
+        south: r[33] || '',
+        unitSize: parseFloat(r[29]) || 0,
+      };
+    }
+    aUnits[unitNo].nma += parseFloat(r[12]) || 0; // Net Mineral Acres (lease-level)
+    aUnits[unitNo].wi += parseFloat(r[25]) || 0;
+    aUnits[unitNo].nri += parseFloat(r[26]) || 0;
+  }
+  for (const u of Object.values(aUnits)) {
+    u.nma = Math.round(u.nma * 10) / 10;
+    u.wi = Math.round(u.wi * 100000) / 100000;
+    u.nri = Math.round(u.nri * 100000) / 100000;
+    units.push(u);
+    seen.add(u.unit);
+  }
+
+  // 3) Also check main tab for numbered units NOT in pivot (shouldn't happen, but safety net)
+  for (let i = 1; i < mainRows.length; i++) {
+    const r = mainRows[i];
+    const unitNo = r[30];
+    if (!unitNo || seen.has(unitNo)) continue;
+    if (!aUnits[unitNo]) {
+      // Aggregate like A-prefix
+      aUnits[unitNo] = {
+        unit: unitNo, nma: 0, wi: 0, nri: 0,
+        operator: r[2] || '', type: r[36] || 'Non-Op',
+        north: r[31] || '', middle: r[32] || '', south: r[33] || '',
+        unitSize: parseFloat(r[29]) || 0,
+      };
+    }
+    aUnits[unitNo].nma += parseFloat(r[12]) || 0;
+    aUnits[unitNo].wi += parseFloat(r[25]) || 0;
+    aUnits[unitNo].nri += parseFloat(r[26]) || 0;
+  }
+
+  console.log(`Sheet: ${units.length} DSU units (${pivotRows.length - 1} from pivot, ${Object.keys(aUnits).length} A-prefix from main tab)`);
+  return units;
+}
+
+// ── Build SECTION_NMA from Section Shapefiles Table ──
+function buildSectionNmaFromSheet() {
+  const rows = parseCSV(fs.readFileSync('sheet_section_nma.csv', 'utf8'));
+  // Cols: 0=County, 1=Township, 2=Range, 3=Section, 4=NMA
+  const nma = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[3] || !r[1] || !r[2]) continue;
+    const sec = String(parseInt(r[3])); // strip ".0" from float section numbers
+    const key = sec + '-' + r[1] + '-' + r[2]; // e.g. "26-17N-20W"
+    const val = parseFloat(r[4]) || 0;
+    if (val > 0) nma[key] = val;
+  }
+  console.log(`Sheet: ${Object.keys(nma).length} sections with NMA`);
+  return nma;
+}
+
 // Always start from the clean base
 let html = execSync('git show be57c5a:index.html', { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 });
 
@@ -45,28 +176,25 @@ var _baseMaps = { 'Map': voyagerBase, 'Dark': darkBase, 'Topo': topoBase, 'Satel
 
 html = html.replace(oldBasemap, newBasemap);
 
-// ── 0a. Add new DSU units and update changed units ──
-// New units
-const newDSUs = [
-  `{ unit:"28", nma:68.4, wi:0.05344, nri:0.04168, operator:"CRAWLEY", type:"Non-Op", north:"11-13N-23W", middle:"", south:"14-13N-23W", unitSize:1280 }`,
-  `{ unit:"522", nma:284.7, wi:0.14829, nri:0.11912, operator:"ANTHEM", type:"Potential Drillable", north:"1-14N-17W", middle:"12-14N-17W", south:"13-14N-17W", unitSize:1920 }`,
-  `{ unit:"A40", nma:666.7, wi:0.52083, nri:0.41667, operator:"DEH_Cinco", type:"Potential Drillable", north:"26-17N-20W", middle:"", south:"35-17N-20W", unitSize:1280 }`,
-];
-const dsuInsert = newDSUs.map(d => '  ' + d + ',').join('\n');
-html = html.replace('];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid', dsuInsert + '\n];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid');
+// ── 0a. Replace DSU_DATA and SECTION_NMA from Google Sheet ──
+// Reads cached CSV files fetched by fetch-sheet-data.js
+const sheetDsuData = buildDsuDataFromSheet();
+const sheetSectionNma = buildSectionNmaFromSheet();
 
-// Add section NMA for new units (from Section Shapefiles Table)
-html = html.replace('const SECTION_NMA = {', 'const SECTION_NMA = {\n  "26-17N-20W":560.0,"35-17N-20W":106.7,\n  "11-13N-23W":0,"14-13N-23W":68.4,\n  "1-14N-17W":132.4,"12-14N-17W":152.3,');
+// Replace the entire SECTION_NMA block
+{
+  const nmaStart = html.indexOf('const SECTION_NMA = {');
+  const nmaEnd = html.indexOf('};', nmaStart) + 2;
+  html = html.slice(0, nmaStart) + 'const SECTION_NMA = ' + JSON.stringify(sheetSectionNma) + ';' + html.slice(nmaEnd);
+}
 
-// Updated units — NMA/WI/NRI changes from sheet
-html = html.replace('unit:"1075", nma:626.3, wi:0.48929, nri:0.38717', 'unit:"1075", nma:643.8, wi:0.50294, nri:0.39827');
-html = html.replace('unit:"902", nma:604.4, wi:0.47222, nri:0.37778', 'unit:"902", nma:641.1, wi:0.50086, nri:0.40069');
-html = html.replace('unit:"1080", nma:560.2, wi:0.43768, nri:0.34964', 'unit:"1080", nma:573.6, wi:0.44810, nri:0.35798');
-html = html.replace('unit:"648", nma:353.7, wi:0.27631, nri:0.22235', 'unit:"648", nma:391.4, wi:0.30580, nri:0.24594');
-html = html.replace('unit:"1117", nma:156.7, wi:0.12239, nri:0.09358', 'unit:"1117", nma:136.0, wi:0.10625, nri:0.08124');
-html = html.replace('unit:"A32", nma:91.1, wi:0.04743, nri:0.03742', 'unit:"A32", nma:22.7, wi:0.01180, nri:0.00964');
-// Unit 638 type change
-html = html.replace('unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Potential Drillable"', 'unit:"638", nma:240.0, wi:0.18750, nri:0.15000, operator:"OSTRICH", type:"Non-Op"');
+// Replace the entire DSU_DATA block
+{
+  const dsuStart = html.indexOf('const DSU_DATA = [');
+  const dsuEnd = html.indexOf('];\n', dsuStart) + 2;
+  const dsuJS = sheetDsuData.map(d => '  ' + JSON.stringify(d)).join(',\n');
+  html = html.slice(0, dsuStart) + 'const DSU_DATA = [\n' + dsuJS + '\n];' + html.slice(dsuEnd);
+}
 
 // ── 0b. Replace computed PLSS grid with BLM official PLSS tile overlay ──
 // Remove the entire computed grid section and replace with BLM WMS layer
