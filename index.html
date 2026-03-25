@@ -549,11 +549,14 @@ var BLMGridLayer = L.TileLayer.extend({
     var tileSize = this.getTileSize();
     var nwPoint = coords.scaleBy(tileSize);
     var sePoint = nwPoint.add(tileSize);
+    // Convert tile pixel coords to lat/lng, then project to EPSG:3857
     var nw = map.options.crs.pointToLatLng(nwPoint, coords.z);
     var se = map.options.crs.pointToLatLng(sePoint, coords.z);
+    var nw3857 = L.CRS.EPSG3857.project(nw);
+    var se3857 = L.CRS.EPSG3857.project(se);
     var bbox = [
-      Math.min(nw.lng, se.lng), Math.min(nw.lat, se.lat),
-      Math.max(nw.lng, se.lng), Math.max(nw.lat, se.lat)
+      Math.min(nw3857.x, se3857.x), Math.min(nw3857.y, se3857.y),
+      Math.max(nw3857.x, se3857.x), Math.max(nw3857.y, se3857.y)
     ].join(',');
     var dl = JSON.stringify([
       {id:1, source:{type:'mapLayer',mapLayerId:1}, drawingInfo:{renderer:{type:'simple',symbol:{type:'esriSFS',style:'esriSFSNull',outline:{type:'esriSLS',style:'esriSLSSolid',color:[140,150,160,160],width:1.5}}},showLabels:false}},
@@ -561,7 +564,7 @@ var BLMGridLayer = L.TileLayer.extend({
     ]);
     return 'https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer/export' +
       '?bbox=' + bbox + '&size=' + tileSize.x + ',' + tileSize.y +
-      '&format=png32&transparent=true&bboxSR=4326&imageSR=4326' +
+      '&format=png32&transparent=true&bboxSR=3857&imageSR=3857' +
       '&dynamicLayers=' + encodeURIComponent(dl) + '&f=image';
   }
 });
