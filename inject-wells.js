@@ -102,6 +102,14 @@ function buildDsuDataFromSheet() {
     });
   }
 
+  // Commentary override for A40 (not in Google Sheet pivot tab)
+  var a40 = units.find(function(u) { return u.unit === 'A40'; });
+  if (a40) {
+    a40.comments = "I really like it - Stacked pay. MUST get section 35 with it to drill.. limited control in 23 - dont know if we would drill north.\n\nRed Fork looks good - thats the primary target - strong sand 30-50'.. \n\nI know this is out of our CHEROKEE buy outline... its really far north.. but i actually think it might work a little here (need to adjust my shelf outline slightly to above this section).. The Skinner def looks like it would contribute in a positive way.. Again, not the first thing i would test but i think it could work.";
+    a40.primaryTarget = 'Red Fork';
+    a40.secondaryTarget = 'Cherokee Shale / Skinner';
+  }
+
   console.log('Sheet: ' + units.length + ' DSU units (' + seen.size + ' total, ' +
     units.filter(u => u.unit.startsWith('A')).length + ' A-prefix resolved from pivot)');
   return units;
