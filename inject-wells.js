@@ -1013,9 +1013,11 @@ document.getElementById('filter-permit').addEventListener('change', filterUnits)
 var CINCO_WELLS = ${JSON.stringify(cincoWells)};
 
 (function() {
+  // Sort: completed wells alpha, DUCs alpha, permits alpha (within each dropdown)
+  var catOrder = { recent: 0, legacy: 0, duc: 1, permit: 2 };
   CINCO_WELLS.sort(function(a, b) {
-    if (a.unit < b.unit) return -1;
-    if (a.unit > b.unit) return 1;
+    var ca = catOrder[a.cat] || 0, cb = catOrder[b.cat] || 0;
+    if (ca !== cb) return ca - cb;
     return a.n.localeCompare(b.n);
   });
 
