@@ -39,6 +39,16 @@ var _baseMaps = { 'Map': voyagerBase, 'Dark': darkBase, 'Topo': topoBase, 'Satel
 
 html = html.replace(oldBasemap, newBasemap);
 
+// ── 0a. Add new DSU units not in the base HTML ──
+const newDSUs = [
+  `{ unit:"28", nma:0, wi:0.05344, nri:0.04168, operator:"DEH 1", type:"Non-Op", north:"11-13N-23W", middle:"", south:"14-13N-23W", unitSize:1280 }`,
+  `{ unit:"522", nma:0, wi:0.14829, nri:0.11912, operator:"DEH_Cinco", type:"Non-Op", north:"1-14N-17W", middle:"12-14N-17W", south:"13-14N-17W", unitSize:1920 }`,
+  `{ unit:"A40", nma:0, wi:0.52083, nri:0.41667, operator:"DEH_Cinco", type:"Potential Drillable", north:"26-17N-20W", middle:"", south:"35-17N-20W", unitSize:1280 }`,
+];
+// Insert before the closing ]; of DSU_DATA
+const dsuInsert = newDSUs.map(d => '  ' + d + ',').join('\n');
+html = html.replace('];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid', dsuInsert + '\n];\n\n// ═══════════════════════════════════════════════════════════════════════\n// PLSS Grid');
+
 // ── 0b. Replace computed PLSS grid with BLM official PLSS tile overlay ──
 // Remove the entire computed grid section and replace with BLM WMS layer
 const oldGridBlock = `// ═══════════════════════════════════════════════════════════════════════
