@@ -136,6 +136,57 @@ html = html.replace(
 const wellData = JSON.parse(fs.readFileSync('wells_map_data.json', 'utf8'));
 const rigData = JSON.parse(fs.readFileSync('rigs_map_data.json', 'utf8'));
 const permitData = JSON.parse(fs.readFileSync('permits_map_data.json', 'utf8'));
+// ── Build-time: compute unit activity, Cinco wells, and operator palette ──
+function computeUnitData(dsuData, wells, permits) {
+  // Build section→unit lookup
+  const secToUnit = {};
+  dsuData.forEach(dsu => {
+    [dsu.north, dsu.middle, dsu.south].filter(Boolean).forEach(str => {
+      // Normalize: strip leading zeros from section number
+      const norm = str.replace(/^0+/, '');
+      secToUnit[norm] = dsu.unit;
+    });
+  });
+
+  // Match wells/permits to DSU units
+  const unitActivity = {};
+  const cincoWells = [];
+
+  wells.forEach(w => {
+    if (!w.str) return;
+    const norm = w.str.replace(/^0+/, '');
+    const unit = secToUnit[norm];
+    if (!unit) return;
+    if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
+    if (w.tb === 'DUC') unitActivity[unit].duc = true;
+    else {
+      unitActivity[unit].cw = true;
+      cincoWells.push({ n: w.n, unit: unit, fg: w.fg, op: w.op, lat: w.lat, lng: w.lng });
+    }
+  });
+
+  permits.forEach(p => {
+    if (!p.str) return;
+    const norm = p.str.replace(/^0+/, '');
+    const unit = secToUnit[norm];
+    if (!unit) return;
+    if (!unitActivity[unit]) unitActivity[unit] = { cw: false, duc: false, permit: false };
+    unitActivity[unit].permit = true;
+  });
+
+  // Collect unique operators and assign colors
+  const opSet = new Set();
+  dsuData.forEach(d => { if (d.operator) opSet.add(d.operator); });
+  const OP_PALETTE = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#6a4c93','#1d3557','#264653','#a8dadc','#d62828','#023e8a','#0077b6'];
+  const opColors = {};
+  let idx = 0;
+  [...opSet].sort().forEach(op => { opColors[op] = OP_PALETTE[idx % OP_PALETTE.length]; idx++; });
+
+  console.log('Activity: ' + Object.keys(unitActivity).length + ' units with wells/permits, ' + cincoWells.length + ' Cinco wells');
+  return { unitActivity, cincoWells, opColors };
+}
+
+
 
 // ── 0. Replace single basemap with Dark/Topo/Satellite toggle ──
 const oldBasemap = `L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
@@ -166,6 +217,7 @@ html = html.replace(oldBasemap, newBasemap);
 // Reads cached CSV files fetched by fetch-sheet-data.js
 const sheetDsuData = buildDsuDataFromSheet();
 const sheetSectionNma = buildSectionNmaFromSheet();
+const { unitActivity, cincoWells, opColors } = computeUnitData(sheetDsuData, wellData, permitData);
 
 // Replace the entire SECTION_NMA block
 {
@@ -446,6 +498,32 @@ const newCSS = `
 
 html = html.replace('</style>', newCSS + '\n</style>');
 
+// Extra CSS for new features (shading toggle, activity filter, well selector)
+const extraCSS = `
+  /* ── Shading Toggle & Activity Filter (bottom-left) ── */
+  #map-controls { position: absolute; left: 12px; bottom: 28px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+  .map-ctrl-box { background: rgba(255,255,255,0.95); border-radius: 8px; border: 1px solid #d1d9e0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 8px 10px; font-size: 11px; min-width: 150px; }
+  .map-ctrl-box h5 { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 6px 0; }
+  .ctrl-toggle { display: flex; align-items: center; gap: 5px; padding: 2px 4px; cursor: pointer; border-radius: 4px;
+    font-size: 11px; color: #1f2328; user-select: none; }
+  .ctrl-toggle:hover { background: #eef1f5; }
+  .ctrl-toggle input[type="radio"], .ctrl-toggle input[type="checkbox"] { margin: 0; accent-color: #0969da; }
+  /* ── Operator Legend ── */
+  #op-legend { display: none; margin-top: 6px; }
+  #op-legend.active { display: block; }
+  .op-legend-item { display: flex; align-items: center; gap: 5px; padding: 1px 0; font-size: 10px; color: #1f2328; }
+  .op-legend-swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  /* ── Well Selector ── */
+  #cinco-well-selector { position: absolute; left: 12px; z-index: 1000; background: rgba(255,255,255,0.95);
+    border-radius: 8px; border: 1px solid #d1d9e0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 8px 10px; width: 220px; font-size: 11px; }
+  #cinco-well-selector h5 { font-size: 10px; color: #656d76; text-transform: uppercase; letter-spacing: 0.4px; margin: 0 0 6px 0; }
+  #cinco-well-selector select { width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid #d1d9e0;
+    border-radius: 4px; background: #fff; color: #1f2328; cursor: pointer; }
+`;
+html = html.replace('</style>', extraCSS + '\n</style>');
+
 // ── 2. HTML: Place slicer panel INSIDE the rank-slicer area (after rank-slicer-potential, before map div) ──
 const slicerHTML = `
   <!-- Well & Rig Layer Slicer -->
@@ -497,7 +575,28 @@ const slicerHTML = `
 `;
 
 // Insert right before the map div (alongside rank slicers, inside #app)
-html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + '\n  <!-- Map -->\n  <div id="map"></div>');
+html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
+  <!-- Map Controls (bottom-left): Shading Toggle + Activity Filter -->
+  <div id="map-controls">
+    <div class="map-ctrl-box">
+      <h5>Unit Shading</h5>
+      <label class="ctrl-toggle"><input type="radio" name="shading" value="status" checked> By Status</label>
+      <label class="ctrl-toggle"><input type="radio" name="shading" value="operator"> By Operator</label>
+      <div id="op-legend"></div>
+    </div>
+    <div class="map-ctrl-box">
+      <h5>Unit Activity</h5>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-cw"> Completed Well</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-duc"> DUC</label>
+      <label class="ctrl-toggle"><input type="checkbox" id="filter-permit"> Active Permit</label>
+    </div>
+  </div>
+  <!-- Well Selector -->
+  <div id="cinco-well-selector">
+    <h5>Wells on Cinco Units</h5>
+    <select id="cinco-well-select"><option value="">Select a well...</option></select>
+  </div>
+` + '\n  <!-- Map -->\n  <div id="map"></div>');
 
 // ── 3. JavaScript ──
 const mainJS = `
@@ -711,6 +810,137 @@ function renderRigs() {
 
 renderAll();
 renderRigs();
+
+// ═══════════════════════════════════════════════════════════════════════
+// Feature 1: Unit Shading Toggle (Status vs Operator)
+// ═══════════════════════════════════════════════════════════════════════
+var OPERATOR_COLORS = ${JSON.stringify(opColors)};
+var shadingMode = 'status';
+
+// Build operator legend
+(function() {
+  var container = document.getElementById('op-legend');
+  var ops = Object.keys(OPERATOR_COLORS).sort();
+  ops.forEach(function(op) {
+    var item = document.createElement('div');
+    item.className = 'op-legend-item';
+    item.innerHTML = '<div class="op-legend-swatch" style="background:' + OPERATOR_COLORS[op] + ';"></div>' + (op || 'Unknown');
+    container.appendChild(item);
+  });
+})();
+
+function recolorPolygons() {
+  DSU_DATA.forEach(function(dsu) {
+    var layer = layers[dsu.unit];
+    if (!layer) return;
+    var poly = layer.poly;
+    if (shadingMode === 'operator') {
+      var color = OPERATOR_COLORS[dsu.operator] || '#adb5bd';
+      poly.setStyle({ fillColor: color, color: color });
+    } else {
+      var colors = TYPE_COLORS[dsu.type] || TYPE_COLORS['Non-Op'];
+      poly.setStyle({ fillColor: colors.fill, color: colors.stroke });
+    }
+  });
+}
+
+// Shading radio toggle
+document.querySelectorAll('input[name="shading"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    shadingMode = this.value;
+    var opLeg = document.getElementById('op-legend');
+    if (shadingMode === 'operator') opLeg.classList.add('active');
+    else opLeg.classList.remove('active');
+    recolorPolygons();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// Feature 2: Unit Activity Filter
+// ═══════════════════════════════════════════════════════════════════════
+var UNIT_ACTIVITY = ${JSON.stringify(unitActivity)};
+
+function filterUnits() {
+  var filterCW = document.getElementById('filter-cw').checked;
+  var filterDUC = document.getElementById('filter-duc').checked;
+  var filterPermit = document.getElementById('filter-permit').checked;
+  var anyFilter = filterCW || filterDUC || filterPermit;
+
+  DSU_DATA.forEach(function(dsu) {
+    var layer = layers[dsu.unit];
+    if (!layer) return;
+    var activity = UNIT_ACTIVITY[dsu.unit];
+
+    if (!anyFilter) {
+      if (!map.hasLayer(layer.poly)) { layer.poly.addTo(map); layer.label.addTo(map); }
+      return;
+    }
+
+    var show = false;
+    if (activity) {
+      if (filterCW && activity.cw) show = true;
+      if (filterDUC && activity.duc) show = true;
+      if (filterPermit && activity.permit) show = true;
+    }
+
+    if (show) {
+      if (!map.hasLayer(layer.poly)) { layer.poly.addTo(map); layer.label.addTo(map); }
+    } else {
+      if (map.hasLayer(layer.poly)) { map.removeLayer(layer.poly); map.removeLayer(layer.label); }
+    }
+  });
+}
+
+document.getElementById('filter-cw').addEventListener('change', filterUnits);
+document.getElementById('filter-duc').addEventListener('change', filterUnits);
+document.getElementById('filter-permit').addEventListener('change', filterUnits);
+
+// ═══════════════════════════════════════════════════════════════════════
+// Feature 3: Well Selection Dropdown
+// ═══════════════════════════════════════════════════════════════════════
+var CINCO_WELLS = ${JSON.stringify(cincoWells)};
+
+(function() {
+  var select = document.getElementById('cinco-well-select');
+  CINCO_WELLS.sort(function(a, b) {
+    if (a.unit < b.unit) return -1;
+    if (a.unit > b.unit) return 1;
+    return a.n.localeCompare(b.n);
+  });
+  CINCO_WELLS.forEach(function(w, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = w.n + ' (Unit ' + w.unit + ')';
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', function() {
+    if (!this.value) return;
+    var w = CINCO_WELLS[parseInt(this.value)];
+    if (!w) return;
+    map.flyTo([w.lat, w.lng], 13, { duration: 0.8 });
+    var layer = layers[w.unit];
+    if (layer) {
+      layer.poly.setStyle({ fillOpacity: 0.9 });
+      setTimeout(function() {
+        layer.poly.setStyle({ fillOpacity: nmaOpacity(DSU_DATA.find(function(d) { return d.unit === w.unit; }).nma) });
+      }, 800);
+      openDetail(DSU_DATA.find(function(d) { return d.unit === w.unit; }));
+    }
+  });
+
+  // Position selector below potential drillable slicer
+  var potEl = document.getElementById('rank-slicer-potential');
+  var selEl = document.getElementById('cinco-well-selector');
+  function positionSelector() {
+    var rect = potEl.getBoundingClientRect();
+    var mapRect = document.getElementById('map').getBoundingClientRect();
+    selEl.style.top = (rect.bottom - mapRect.top + 8) + 'px';
+  }
+  positionSelector();
+  window.addEventListener('resize', positionSelector);
+})();
+
 `;
 
 // Insert JS before the closing </script> tag, after the Escape keydown listener
