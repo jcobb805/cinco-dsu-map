@@ -731,6 +731,9 @@ var FORMATION_COLORS = {
 var TIME_BUCKETS_ORDER = ['2026','2025','2024','2023','2022','2021','2020','2010s','2000s','Pre-2000'];
 
 // Layer groups
+// Create custom pane for wells above DSU polygons so tooltips work
+map.createPane("wellPane");
+map.getPane("wellPane").style.zIndex = 450;
 var wellLayerGroup = L.layerGroup().addTo(map);
 var ducLayerGroup = L.layerGroup().addTo(map);
 var permitLayerGroup = L.layerGroup().addTo(map);
@@ -855,12 +858,14 @@ function addLateral(layerGroup, coords, color, dashed, tooltip) {
     var line = L.polyline(coords, {
       color: color, weight: 2.5, opacity: 0.85,
       dashArray: dashed ? '6, 4' : null,
+      pane: 'wellPane',
     });
     line.bindTooltip(tooltip, { sticky: true });
     layerGroup.addLayer(line);
   } else {
     var marker = L.circleMarker(coords[0], {
       radius: 4, fillColor: color, color: '#fff', weight: 0.8, fillOpacity: 0.8,
+      pane: 'wellPane',
     });
     marker.bindTooltip(tooltip, { sticky: true });
     layerGroup.addLayer(marker);
@@ -911,7 +916,7 @@ function renderRigs() {
       html: '<svg width="18" height="22" viewBox="0 0 18 22" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3));"><polygon points="9,0 3,18 15,18" fill="none" stroke="#000" stroke-width="1.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#000" stroke-width="1.2"/><line x1="5" y1="6" x2="13" y2="6" stroke="#000" stroke-width="1"/><line x1="4" y1="12" x2="14" y2="12" stroke="#000" stroke-width="1"/><rect x="2" y="18" width="14" height="3" fill="#000" rx="1"/></svg>',
       iconSize: [18, 22], iconAnchor: [9, 22],
     });
-    var marker = L.marker([r.lat, r.lng], { icon: icon });
+    var marker = L.marker([r.lat, r.lng], { icon: icon, pane: 'wellPane' });
     marker.bindTooltip(rigTooltip(r), { sticky: true });
     rigLayerGroup.addLayer(marker);
   });
