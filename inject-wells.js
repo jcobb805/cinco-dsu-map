@@ -581,7 +581,7 @@ html = html.replace('  <!-- Map -->\n  <div id="map"></div>', slicerHTML + `
     </div>
     <div class="map-ctrl-box">
       <h5>Unit Shading</h5>
-      <label class="ctrl-toggle"><input type="radio" name="shading" value="status" checked> By Status</label>
+      <label class="ctrl-toggle"><input type="radio" name="shading" value="status" checked> By Unit Type</label>
       <label class="ctrl-toggle"><input type="radio" name="shading" value="operator"> By Operator</label>
       <div id="op-legend"></div>
     </div>
