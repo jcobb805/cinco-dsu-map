@@ -1,0 +1,35 @@
+{
+  "GRAYS PEAK 1524 1-2H35H": {
+    "operator": "Sandridge",
+    "text": "15.589 acres in each well = 0.01217890625 WI in each well\n79.25% lease royalty = 0.009651783203 NRI in each well\n\nThese wells are currently completed and producing. I believe that HMF paid all costs up front which was $126,599.73 for each well. They also had a DOT on this interest so we probably need to get them to get that released.\n\nCurrent production on the #1 is 781 BOD and 3,092 MCFD"
+  },
+  "GRAYS PEAK 1524 2-2H35H": {
+    "operator": "Sandridge",
+    "text": "15.589 acres in each well = 0.01217890625 WI in each well\n79.25% lease royalty = 0.009651783203 NRI in each well\n\nThese wells are currently completed and producing. I believe that HMF paid all costs up front which was $126,599.73 for each well. They also had a DOT on this interest so we probably need to get them to get that released.\n\nCurrent production on the #2 is 794 BOD and 3,712 MCFD"
+  },
+  "BEATY 1-2-35CHX": {
+    "operator": "Crawley",
+    "text": "135.999085 acres = 0.1062492852 WI\n76.46% lease royalty = 0.08123820343 NRI\n\nThis well is a DUC they are currently fracking it so it could be completed any day. Casey has a deal in place with Crawley to be carried to JIB and we noticed them on this one back in January. I believe that we are already receiving JIBs so those costs should already be known to everyone.\n\nWhen we noticed Crawley of this interest they defected out 20.580915 acres so CM still owes DEH $51,452.29 to make this all square (the 135 acres reflects the 20 that was defected)"
+  },
+  "BEATY 1-2-11-14CHX": {
+    "operator": "Crawley",
+    "text": "68.4 acres = 0.0534375 WI\n78.0% lease royalty = 0.04168125 NRI\n\nThis well has been completed. They are waiting to complete the other Beaty well then they will start flowback on both of them. Casey has a deal in place with Crawley to be carried to JIB and we noticed them on this one back in January. I believe that we are already receiving JIBs so those costs should already be known to everyone."
+  },
+  "SKY KING 2-21-27-34CHX": {
+    "operator": "Crawley",
+    "text": "39.915 acres = 0.03118359375 WI\n9.79 acres leased at 81.25% + 0.125 acres leased at 80% + 30.0 acres leased at 78% = 0.02457373047 NRI\n\nTotal well costs due for this one will be $368,495.00. Casey has a deal in place with Crawley to be carried to JIB so once they spud the well we should start receiving JIBs"
+  },
+  "TBD 1-28-33CHX": {
+    "operator": "Crawley",
+    "unit": "45",
+    "text": "84.84 acres = 0.06628125 WI\n66.12 acres leased at 79.96% = 18.72 acres leased at 78% = 0.052608525 NRI\n\nThis one has a pending pooling so there is nothing to do with it yet, but as soon as it is final I will make our elections and I assume Casey will be able to get the same deal with them where we are carried to JIB. Total well costs for this one will be $787,121.66"
+  },
+  "JAMES 1-3-34CHX": {
+    "operator": "Crawley",
+    "text": "4.013 acres = 0.00313515625 WI\n75.47% lease royalty = 0.002366102422 NRI\n\nThey originally had a final pooling on this one that was only a 180 day order and they could not get the well drilled in time so they refunded all AFE costs back to the WI owners. CM had paid all of those costs and the money has since been refunded to either them or us. The total well costs for this one will be $38,262.90, with this one being so small I would imagine they would prefer for us to pay 100% of costs up front.\n\nThey are applying to get the pooling order extended at which time it will become a 1 year order wherein we will have to get elections in to participate but will have the option to defer payment until receipt of Spud Notice. So more than likely nothing for us to do on this one until end of year."
+  },
+  "MCDANIEL 1H-14-23": {
+    "operator": "Citizen",
+    "text": "HMF purported to assign us 9.33 acres in this well. When I noticed Citizen on it they defected it 100% so we do not own anything in here but HMF needs to pay us back $23,325.00"
+  }
+}
