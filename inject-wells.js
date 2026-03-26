@@ -1108,6 +1108,52 @@ openDetail = function(dsu) {
 };
 })();
 
+
+// ── Well Commentary (Marcus) — appended to detail panel on click ──
+(function() {
+  var origOpen = openDetail;
+  openDetail = function(dsu) {
+    origOpen(dsu);
+    var body = document.getElementById('detail-body');
+    if (!body) return;
+    var unitWells = (typeof CINCO_WELLS !== 'undefined') ? CINCO_WELLS.filter(function(w) { return w.unit === dsu.unit; }) : [];
+    var commentaryHtml = '';
+    unitWells.forEach(function(w) {
+      if (WELL_COMMENTARY && WELL_COMMENTARY[w.n]) {
+        var c = WELL_COMMENTARY[w.n];
+        commentaryHtml += '<div style="margin-bottom:12px;"><b>' + w.n + '</b>';
+        commentaryHtml += ' <span style="color:#656d76;">(' + c.operator + ')</span><br>';
+        commentaryHtml += '<span style="white-space:pre-wrap;font-size:12px;line-height:1.5;">' + c.text + '</span></div>';
+      }
+    });
+    if (typeof WELL_COMMENTARY !== 'undefined') {
+      Object.keys(WELL_COMMENTARY).forEach(function(wn) {
+        var c = WELL_COMMENTARY[wn];
+        if (c.unit === dsu.unit && !unitWells.some(function(w) { return w.n === wn; })) {
+          commentaryHtml += '<div style="margin-bottom:12px;"><b>' + wn + '</b>';
+          commentaryHtml += ' <span style="color:#656d76;">(' + c.operator + ')</span><br>';
+          commentaryHtml += '<span style="white-space:pre-wrap;font-size:12px;line-height:1.5;">' + c.text + '</span></div>';
+        }
+      });
+    }
+    if (commentaryHtml) {
+      var commentSection = document.createElement('div');
+      commentSection.className = 'detail-section';
+      commentSection.innerHTML = '<h3>Well Commentary (Marcus)</h3>' + commentaryHtml;
+      body.appendChild(commentSection);
+    }
+    if (dsu.images && dsu.images.length > 0) {
+      var imgSection = document.createElement('div');
+      imgSection.className = 'detail-section';
+      imgSection.innerHTML = '<h3>Geological Images</h3>' +
+        dsu.images.map(function(src, i) {
+          return '<div style="margin-bottom:10px;"><img src="' + src + '" style="max-width:100%;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)"></div>';
+        }).join('');
+      body.appendChild(imgSection);
+    }
+  };
+})();
+
 `;
 
 // Insert JS before the closing </script> tag, after the Escape keydown listener
