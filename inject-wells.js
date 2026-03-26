@@ -1069,8 +1069,8 @@ var WELL_COMMENTARY = ${JSON.stringify(wellCommentary)};
 var _origOpenDetail = openDetail;
 openDetail = function(dsu) {
   _origOpenDetail(dsu);
+  var body = document.getElementById('detail-body');
   if (dsu.images && dsu.images.length > 0) {
-    var body = document.getElementById('detail-body');
     var imgSection = document.createElement('div');
     imgSection.className = 'detail-section';
     imgSection.innerHTML = '<h3>Geological Images</h3>' +
