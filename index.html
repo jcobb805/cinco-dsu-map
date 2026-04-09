@@ -927,18 +927,18 @@ function openDetail(dsu) {
           <div class="label">Secondary Target${dsu.secondaryTarget.includes(" / ") ? "s" : ""}</div>
           <div class="value">${dsu.secondaryTarget.split(" / ").join("<br>")}</div>
         </div>
-        <div class="detail-field">
+        ${dsu.cherokeeTier ? `<div class="detail-field">
           <div class="label">Cherokee Tier</div>
           <div class="value" style="font-weight:700;color:${dsu.cherokeeTier===1?'#1a7f37':dsu.cherokeeTier===2?'#bf8700':'#cf222e'};">Tier ${dsu.cherokeeTier}</div>
-        </div>
-        <div class="detail-field">
+        </div>` : ''}
+        ${dsu.redForkTier ? `<div class="detail-field">
           <div class="label">Red Fork Tier</div>
           <div class="value" style="font-weight:700;color:${dsu.redForkTier===1?'#1a7f37':dsu.redForkTier===2?'#bf8700':'#cf222e'};">Tier ${dsu.redForkTier}</div>
-        </div>
-        <div class="detail-field full">
+        </div>` : ''}
+        ${dsu.rank ? `<div class="detail-field full">
           <div class="label">Overall Rank — ${dsu.type === "Drillable" ? "Drillable Units" : "Potential Drillable Units"}</div>
           <div class="value" style="font-size:18px;font-weight:700;">#${dsu.rank}</div>
-        </div>
+        </div>` : ''}
         ${dsu.keyOffsets ? `<div class="detail-field full">
           <div class="label">Key Offsets</div>
           <div class="value" style="font-size:11px;">${dsu.keyOffsets}</div>
