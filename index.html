@@ -193,7 +193,7 @@
       <div class="legend-item"><div class="legend-swatch" style="background:#1a7f37;"></div> Drillable</div>
       <div class="legend-item"><div class="legend-swatch" style="background:#bf8700;"></div> Potential Drillable</div>
       <div class="legend-item"><div class="legend-swatch" style="background:#8b949e;"></div> Non-Op</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:#5e60ce;"></div> Unassigned</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(94,96,206,0.35);"></div> Unassigned</div>
     </div>
   </div>
 
@@ -535,7 +535,7 @@ DSU_DATA.forEach(dsu => {
   var dsuSections = new Set();
   DSU_DATA.forEach(function(d) {
     [d.north, d.middle, d.south].filter(Boolean).forEach(function(str) {
-      var m = str.match(/(d+)-(d+N)-(d+W)/);
+      var m = str.match(/(\d+)-(\d+N)-(\d+W)/);
       if (m) dsuSections.add(parseInt(m[1]) + '-' + m[2] + '-' + m[3]);
     });
   });
