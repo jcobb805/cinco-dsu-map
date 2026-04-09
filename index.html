@@ -181,8 +181,7 @@
 
     <div class="stats-bar" id="stats-bar">
       <div class="stat"><div class="val" id="stat-units">0</div><div class="lbl">Units</div></div>
-      <div class="stat"><div class="val" id="stat-total-nma">0</div><div class="lbl">Total NMA</div></div>
-      <div class="stat"><div class="val" id="stat-nma">0</div><div class="lbl">Assigned NMA</div></div>
+      <div class="stat"><div class="val" id="stat-total-nma">0</div><div class="lbl">Net Acres</div></div>
       <div class="stat"><div class="val" id="stat-wi">0</div><div class="lbl">Avg W.I.</div></div>
       <div class="stat"><div class="val" id="stat-nri">0</div><div class="lbl">Avg NRI</div></div>
     </div>
@@ -194,6 +193,7 @@
       <div class="legend-item"><div class="legend-swatch" style="background:#1a7f37;"></div> Drillable</div>
       <div class="legend-item"><div class="legend-swatch" style="background:#bf8700;"></div> Potential Drillable</div>
       <div class="legend-item"><div class="legend-swatch" style="background:#8b949e;"></div> Non-Op</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#5e60ce;"></div> Unassigned</div>
     </div>
   </div>
 
@@ -453,6 +453,7 @@ const TYPE_COLORS = {
   'Drillable':           { fill: '#1a7f37', stroke: '#1a7f37', bg: 'rgba(26,127,55,0.18)' },
   'Potential Drillable': { fill: '#bf8700', stroke: '#9a6700', bg: 'rgba(191,135,0,0.18)' },
   'Non-Op':              { fill: '#8b949e', stroke: '#656d76', bg: 'rgba(139,148,158,0.15)' },
+  'Unassigned':          { fill: '#5e60ce', stroke: '#4a4cb0', bg: 'rgba(94,96,206,0.15)' },
 };
 
 function typeClass(t) {
@@ -530,6 +531,33 @@ DSU_DATA.forEach(dsu => {
   layers[dsu.unit] = { poly, label };
   allPolygons.push(poly);
 });
+
+// Render unassigned sections (NMA not in any DSU)
+(function() {
+  var dsuSections = new Set();
+  DSU_DATA.forEach(function(d) {
+    [d.north, d.middle, d.south].filter(Boolean).forEach(function(str) {
+      var m = str.match(/(d+)-(d+N)-(d+W)/);
+      if (m) dsuSections.add(parseInt(m[1]) + '-' + m[2] + '-' + m[3]);
+    });
+  });
+  var uaColors = TYPE_COLORS['Unassigned'];
+  Object.keys(SECTION_NMA).forEach(function(key) {
+    if (dsuSections.has(key)) return;
+    if (!BLM_SECTION_POLYGONS[key]) return;
+    var rings = BLM_SECTION_POLYGONS[key].map(function(ring) {
+      return ring.map(function(pt) { return [pt[0] + DSU_OFFSET_LAT, pt[1] + DSU_OFFSET_LNG]; });
+    });
+    var poly = L.polygon(rings, {
+      color: uaColors.stroke, weight: 1.5, opacity: 0.7,
+      fillColor: uaColors.fill, fillOpacity: 0.25,
+      className: 'dsu-poly'
+    }).addTo(map);
+    var nma = SECTION_NMA[key];
+    poly.bindTooltip('<b>' + key + '</b><br>NMA: ' + nma.toLocaleString(undefined, {maximumFractionDigits:1}) + '<br>Unassigned', { sticky: true });
+    allPolygons.push(poly);
+  });
+})();
 
 
 // Rank Slicers by Category
@@ -706,7 +734,6 @@ function renderList(data) {
 
   // Stats
   document.getElementById('stat-units').textContent = data.length;
-  document.getElementById('stat-nma').textContent = data.reduce((s, d) => s + d.nma, 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
   var totalSectionNma = Object.values(SECTION_NMA).reduce(function(s, v) { return s + v; }, 0);
   document.getElementById('stat-total-nma').textContent = totalSectionNma.toLocaleString(undefined, { maximumFractionDigits: 1 });
   const avgWI = data.length ? data.reduce((s, d) => s + d.wi, 0) / data.length : 0;
