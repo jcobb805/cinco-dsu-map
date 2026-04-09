@@ -1319,14 +1319,14 @@ function filterUnits() {
         });
         line.bindTooltip(tooltip, { sticky: true });
         cincoWellLayerGroup.addLayer(line);
-      } else {
-        var marker = L.circleMarker([cw.lat, cw.lng], {
-          radius: 6, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.9,
-          pane: 'wellPane'
-        });
-        marker.bindTooltip(tooltip, { sticky: true });
-        cincoWellLayerGroup.addLayer(marker);
       }
+      // Always add a dot at the surface location
+      var marker = L.circleMarker([cw.lat, cw.lng], {
+        radius: 6, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.9,
+        pane: 'wellPane'
+      });
+      marker.bindTooltip(tooltip, { sticky: true });
+      cincoWellLayerGroup.addLayer(marker);
     });
     if (!map.hasLayer(cincoWellLayerGroup)) cincoWellLayerGroup.addTo(map);
   } else {
