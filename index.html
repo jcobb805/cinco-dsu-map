@@ -181,7 +181,8 @@
 
     <div class="stats-bar" id="stats-bar">
       <div class="stat"><div class="val" id="stat-units">0</div><div class="lbl">Units</div></div>
-      <div class="stat"><div class="val" id="stat-nma">0</div><div class="lbl">Net Acres</div></div>
+      <div class="stat"><div class="val" id="stat-total-nma">0</div><div class="lbl">Total NMA</div></div>
+      <div class="stat"><div class="val" id="stat-nma">0</div><div class="lbl">Assigned NMA</div></div>
       <div class="stat"><div class="val" id="stat-wi">0</div><div class="lbl">Avg W.I.</div></div>
       <div class="stat"><div class="val" id="stat-nri">0</div><div class="lbl">Avg NRI</div></div>
     </div>
@@ -706,6 +707,8 @@ function renderList(data) {
   // Stats
   document.getElementById('stat-units').textContent = data.length;
   document.getElementById('stat-nma').textContent = data.reduce((s, d) => s + d.nma, 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  var totalSectionNma = Object.values(SECTION_NMA).reduce(function(s, v) { return s + v; }, 0);
+  document.getElementById('stat-total-nma').textContent = totalSectionNma.toLocaleString(undefined, { maximumFractionDigits: 1 });
   const avgWI = data.length ? data.reduce((s, d) => s + d.wi, 0) / data.length : 0;
   const avgNRI = data.length ? data.reduce((s, d) => s + d.nri, 0) / data.length : 0;
   document.getElementById('stat-wi').textContent = (avgWI * 100).toFixed(2) + '%';
