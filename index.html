@@ -1279,6 +1279,15 @@ function filterUnits() {
       if (map.hasLayer(layer.poly)) { map.removeLayer(layer.poly); map.removeLayer(layer.label); }
     }
   });
+
+  // Hide unassigned sections when activity filter is active
+  unassignedPolygons.forEach(function(p) {
+    if (anyFilter) {
+      if (map.hasLayer(p)) map.removeLayer(p);
+    } else {
+      if (!map.hasLayer(p)) p.addTo(map);
+    }
+  });
 }
 
 document.getElementById('filter-rcw').addEventListener('change', filterUnits);
