@@ -1309,12 +1309,24 @@ function filterUnits() {
       var dashed = (cw.cat === 'duc' || cw.cat === 'permit');
       var label = cw.cat === 'duc' ? ' (DUC)' : cw.cat === 'permit' ? ' (Permit)' : ' (Well)';
       var tooltip = '<b>' + cw.n + '</b>' + label + '<br>Unit: ' + cw.unit + '<br>Operator: ' + cw.op;
-      var marker = L.circleMarker([cw.lat, cw.lng], {
-        radius: 6, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.9,
-        pane: 'wellPane'
-      });
-      marker.bindTooltip(tooltip, { sticky: true });
-      cincoWellLayerGroup.addLayer(marker);
+      // Look up bottom-hole coords from WELL_DATA/PERMIT_DATA for lateral rendering
+      var wellMatch = WELL_DATA.find(function(w) { return w.n === cw.n; }) || PERMIT_DATA.find(function(p) { return p.n === cw.n; });
+      if (wellMatch && wellMatch.lat2 && wellMatch.lng2) {
+        var line = L.polyline([[cw.lat, cw.lng], [wellMatch.lat2, wellMatch.lng2]], {
+          color: color, weight: 3, opacity: 0.9,
+          dashArray: dashed ? '6, 4' : null,
+          pane: 'wellPane'
+        });
+        line.bindTooltip(tooltip, { sticky: true });
+        cincoWellLayerGroup.addLayer(line);
+      } else {
+        var marker = L.circleMarker([cw.lat, cw.lng], {
+          radius: 6, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.9,
+          pane: 'wellPane'
+        });
+        marker.bindTooltip(tooltip, { sticky: true });
+        cincoWellLayerGroup.addLayer(marker);
+      }
     });
     if (!map.hasLayer(cincoWellLayerGroup)) cincoWellLayerGroup.addTo(map);
   } else {
