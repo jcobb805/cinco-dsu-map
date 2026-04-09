@@ -531,6 +531,7 @@ DSU_DATA.forEach(dsu => {
 });
 
 // Render unassigned sections (NMA not in any DSU)
+var unassignedPolygons = [];
 (function() {
   var dsuSections = new Set();
   DSU_DATA.forEach(function(d) {
@@ -553,6 +554,7 @@ DSU_DATA.forEach(dsu => {
     }).addTo(map);
     var nma = SECTION_NMA[key];
     poly.bindTooltip('<b>' + key + '</b><br>NMA: ' + nma.toLocaleString(undefined, {maximumFractionDigits:1}) + '<br>Unassigned', { sticky: true });
+    unassignedPolygons.push(poly);
     allPolygons.push(poly);
   });
 })();
@@ -779,6 +781,15 @@ function applyFilters() {
   });
 
   renderList(filtered);
+
+  // Show/hide unassigned sections (only visible when showing all types or no specific type filter)
+  unassignedPolygons.forEach(function(p) {
+    if (typeVal === 'all') {
+      if (!map.hasLayer(p)) p.addTo(map);
+    } else {
+      if (map.hasLayer(p)) map.removeLayer(p);
+    }
+  });
 
   // Toggle rank slicer panels based on filter
   var drillPanel = document.getElementById("rank-slicer-drillable");
