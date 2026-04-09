@@ -936,7 +936,7 @@ function openDetail(dsu) {
           <div class="value" style="font-weight:700;color:${dsu.redForkTier===1?'#1a7f37':dsu.redForkTier===2?'#bf8700':'#cf222e'};">Tier ${dsu.redForkTier}</div>
         </div>
         <div class="detail-field full">
-          <div class="label">Overall Rank</div>
+          <div class="label">Overall Rank — ${dsu.type === "Drillable" ? "Drillable Units" : "Potential Drillable Units"}</div>
           <div class="value" style="font-size:18px;font-weight:700;">#${dsu.rank}</div>
         </div>
         ${dsu.keyOffsets ? `<div class="detail-field full">
