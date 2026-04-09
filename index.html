@@ -910,7 +910,7 @@ function openDetail(dsu) {
           const labels = ['North', 'Middle', 'South'];
           const sectionLabels = sections.length === 2 ? ['North', 'South'] : labels;
           var sNma = SECTION_NMA[s] || "";
-          var nmaStr = sNma ? '<span style="float:right;color:#1f2328;font-weight:600;font-size:11px;">' + sNma.toLocaleString() + ' NMA</span>' : "";
+          var nmaStr = sNma ? '<span style="float:right;color:#1f2328;font-weight:600;font-size:11px;">' + sNma.toLocaleString(undefined, {maximumFractionDigits:1}) + ' NMA</span>' : "";
           return `<li style="display:flex;justify-content:space-between;align-items:center;"><span><span style="color:#8b949e;font-size:10px;">${sectionLabels[i]}</span> &nbsp; ${s}</span>${nmaStr}</li>`;
         }).join('')}
       </ul>
