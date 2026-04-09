@@ -1414,15 +1414,6 @@ openDetail = function(dsu) {
       commentSection.innerHTML = '<h3>Well Commentary (Marcus)</h3>' + commentaryHtml;
       body.appendChild(commentSection);
     }
-    if (dsu.images && dsu.images.length > 0) {
-      var imgSection = document.createElement('div');
-      imgSection.className = 'detail-section';
-      imgSection.innerHTML = '<h3>Geological Images</h3>' +
-        dsu.images.map(function(src, i) {
-          return '<div style="margin-bottom:10px;"><img src="' + src + '" style="max-width:100%;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)"></div>';
-        }).join('');
-      body.appendChild(imgSection);
-    }
   };
 })();
 
