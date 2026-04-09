@@ -1011,6 +1011,7 @@ map.getPane("wellPane").style.zIndex = 450;
 var wellLayerGroup = L.layerGroup().addTo(map);
 var ducLayerGroup = L.layerGroup().addTo(map);
 var permitLayerGroup = L.layerGroup().addTo(map);
+var cincoWellLayerGroup = L.layerGroup();
 var rigLayerGroup = L.layerGroup().addTo(map);
 
 // Filter state
@@ -1288,6 +1289,37 @@ function filterUnits() {
       if (!map.hasLayer(p)) p.addTo(map);
     }
   });
+
+  // Show Cinco-matched wells when activity filter is active
+  cincoWellLayerGroup.clearLayers();
+  if (anyFilter) {
+    var FORMATION_COLORS_LOCAL = typeof FORMATION_COLORS !== 'undefined' ? FORMATION_COLORS : {};
+    CINCO_WELLS.forEach(function(cw) {
+      var dsu = DSU_DATA.find(function(d) { return d.unit === cw.unit; });
+      if (!dsu) return;
+      var activity = UNIT_ACTIVITY[cw.unit];
+      if (!activity) return;
+      var showWell = false;
+      if (filterRCW && activity.rcw && cw.cat === 'recent') showWell = true;
+      if (filterLCW && activity.lcw && cw.cat === 'legacy') showWell = true;
+      if (filterDUC && activity.duc && cw.cat === 'duc') showWell = true;
+      if (filterPermit && activity.permit && cw.cat === 'permit') showWell = true;
+      if (!showWell) return;
+      var color = (cw.cat === 'permit') ? '#f4a261' : (cw.cat === 'duc') ? '#cf222e' : (FORMATION_COLORS_LOCAL[cw.fg] || '#4493f8');
+      var dashed = (cw.cat === 'duc' || cw.cat === 'permit');
+      var label = cw.cat === 'duc' ? ' (DUC)' : cw.cat === 'permit' ? ' (Permit)' : ' (Well)';
+      var tooltip = '<b>' + cw.n + '</b>' + label + '<br>Unit: ' + cw.unit + '<br>Operator: ' + cw.op;
+      var marker = L.circleMarker([cw.lat, cw.lng], {
+        radius: 6, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.9,
+        pane: 'wellPane'
+      });
+      marker.bindTooltip(tooltip, { sticky: true });
+      cincoWellLayerGroup.addLayer(marker);
+    });
+    if (!map.hasLayer(cincoWellLayerGroup)) cincoWellLayerGroup.addTo(map);
+  } else {
+    if (map.hasLayer(cincoWellLayerGroup)) map.removeLayer(cincoWellLayerGroup);
+  }
 }
 
 document.getElementById('filter-rcw').addEventListener('change', filterUnits);
