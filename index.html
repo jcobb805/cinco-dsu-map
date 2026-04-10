@@ -734,8 +734,8 @@ function renderList(data) {
 
   // Stats
   document.getElementById('stat-units').textContent = data.length;
-  var totalSectionNma = Object.values(SECTION_NMA).reduce(function(s, v) { return s + v; }, 0);
-  document.getElementById('stat-total-nma').textContent = totalSectionNma.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  var filteredNma = data.reduce(function(s, d) { return s + d.nma; }, 0);
+  document.getElementById('stat-total-nma').textContent = filteredNma.toLocaleString(undefined, { maximumFractionDigits: 1 });
   const avgWI = data.length ? data.reduce((s, d) => s + d.wi, 0) / data.length : 0;
   const avgNRI = data.length ? data.reduce((s, d) => s + d.nri, 0) / data.length : 0;
   document.getElementById('stat-wi').textContent = (avgWI * 100).toFixed(2) + '%';
