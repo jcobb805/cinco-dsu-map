@@ -1168,9 +1168,12 @@ function wellTooltip(w) {
     var fmtPct = v => v==null ? 'N/A' : (v*100).toFixed(1) + '%';
     html += '<hr style="margin:6px 0;border:none;border-top:1px solid #d1d9e0">' +
       '<b style="color:#d4a84b;">Economics (' + econ.run + ' base):</b><br>' +
+      '<span style="color:#656d76;">Formation:</span> ' + (econ.reservoir || 'N/A') + '<br>' +
       '<span style="color:#656d76;">IRR:</span> ' + fmtPct(econ.irr) + '<br>' +
       '<span style="color:#656d76;">Payout:</span> ' + (econ.payoutMo!=null?econ.payoutMo+' mo':'N/A') + '<br>' +
       '<span style="color:#656d76;">Gross CAPEX:</span> ' + fmt$(econ.grossCapex) + 'K<br>' +
+      '<span style="color:#656d76;">PV10:</span> ' + fmt$(econ.pv10) + 'K<br>' +
+      '<span style="color:#656d76;">PV10/NMA:</span> ' + fmt$(econ.pv10nma) + '<br>' +
       '<span style="color:#656d76;">$/NMA Mo 24:</span> ' + fmt$(econ.nmaAt24) + '<br>' +
       '<span style="color:#656d76;">Gross EUR:</span> ' + Math.round(econ.eurOil).toLocaleString() + ' MBbl oil / ' + Math.round(econ.eurGas).toLocaleString() + ' MMcf gas<br>' +
       '<span style="color:#0969da;font-size:11px;">Click to open in Dashboard →</span>';
@@ -1397,9 +1400,12 @@ function filterUnits() {
         var fmtPct = function(v){return v==null?'N/A':(v*100).toFixed(1)+'%';};
         tooltip += '<hr style="margin:6px 0;border:none;border-top:1px solid #d1d9e0">' +
           '<b style="color:#d4a84b;">Economics ('+econ.run+' base):</b><br>' +
+          '<span style="color:#656d76;">Formation:</span> '+(econ.reservoir||'N/A')+'<br>' +
           '<span style="color:#656d76;">IRR:</span> '+fmtPct(econ.irr)+'<br>' +
           '<span style="color:#656d76;">Payout:</span> '+(econ.payoutMo!=null?econ.payoutMo+' mo':'N/A')+'<br>' +
           '<span style="color:#656d76;">Gross CAPEX:</span> '+fmt$(econ.grossCapex)+'K<br>' +
+          '<span style="color:#656d76;">PV10:</span> '+fmt$(econ.pv10)+'K<br>' +
+          '<span style="color:#656d76;">PV10/NMA:</span> '+fmt$(econ.pv10nma)+'<br>' +
           '<span style="color:#656d76;">$/NMA Mo 24:</span> '+fmt$(econ.nmaAt24)+'<br>' +
           '<span style="color:#656d76;">Gross EUR:</span> '+Math.round(econ.eurOil).toLocaleString()+' MBbl oil / '+Math.round(econ.eurGas).toLocaleString()+' MMcf gas<br>' +
           '<span style="color:#0969da;font-size:11px;">Click to open in Dashboard →</span>';
