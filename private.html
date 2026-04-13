@@ -1204,9 +1204,9 @@ function rigTooltip(r) {
 }
 
 function addLateral(layerGroup, coords, color, dashed, tooltip, wellName) {
-  var hasEcon = typeof WELL_ECON !== 'undefined' && wellName && WELL_ECON[wellName];
-  var clickHandler = hasEcon ? function() {
-    window.open('https://jcobb805.github.io/cinco-analysis/run4.html?well=' + encodeURIComponent(wellName), '_blank');
+  var econ = (typeof WELL_ECON !== 'undefined' && wellName) ? WELL_ECON[wellName] : null;
+  var clickHandler = econ ? function() {
+    window.open('https://jcobb805.github.io/cinco-analysis/run4.html?well=' + encodeURIComponent(econ.display), '_blank');
   } : null;
   if (coords.length === 2) {
     var line = L.polyline(coords, {
@@ -1390,6 +1390,23 @@ function filterUnits() {
       var dashed = (cw.cat === 'duc' || cw.cat === 'permit');
       var label = cw.cat === 'duc' ? ' (DUC)' : cw.cat === 'permit' ? ' (Permit)' : ' (Well)';
       var tooltip = '<b>' + cw.n + '</b>' + label + '<br>Unit: ' + cw.unit + '<br>Operator: ' + cw.op;
+      // Append economics if available (private.html only)
+      var econ = (typeof WELL_ECON !== 'undefined') ? WELL_ECON[cw.n] : null;
+      if (econ) {
+        var fmt$ = function(v){return v==null?'N/A':'$'+Math.round(v).toLocaleString();};
+        var fmtPct = function(v){return v==null?'N/A':(v*100).toFixed(1)+'%';};
+        tooltip += '<hr style="margin:6px 0;border:none;border-top:1px solid #d1d9e0">' +
+          '<b style="color:#d4a84b;">Economics ('+econ.run+' base):</b><br>' +
+          '<span style="color:#656d76;">IRR:</span> '+fmtPct(econ.irr)+'<br>' +
+          '<span style="color:#656d76;">Payout:</span> '+(econ.payoutMo!=null?econ.payoutMo+' mo':'N/A')+'<br>' +
+          '<span style="color:#656d76;">Gross CAPEX:</span> '+fmt$(econ.grossCapex)+'K<br>' +
+          '<span style="color:#656d76;">$/NMA Mo 24:</span> '+fmt$(econ.nmaAt24)+'<br>' +
+          '<span style="color:#656d76;">Gross EUR:</span> '+Math.round(econ.eurOil).toLocaleString()+' MBbl oil / '+Math.round(econ.eurGas).toLocaleString()+' MMcf gas<br>' +
+          '<span style="color:#0969da;font-size:11px;">Click to open in Dashboard →</span>';
+      }
+      var clickHandler = econ ? function() {
+        window.open('https://jcobb805.github.io/cinco-analysis/run4.html?well=' + encodeURIComponent(econ.display), '_blank');
+      } : null;
       // Look up bottom-hole coords from WELL_DATA/PERMIT_DATA for lateral rendering
       var wellMatch = WELL_DATA.find(function(w) { return w.n === cw.n; }) || PERMIT_DATA.find(function(p) { return p.n === cw.n; });
       if (wellMatch && wellMatch.lat2 && wellMatch.lng2) {
@@ -1399,6 +1416,7 @@ function filterUnits() {
           pane: 'wellPane'
         });
         line.bindTooltip(tooltip, { sticky: true });
+        if (clickHandler) line.on('click', clickHandler);
         cincoWellLayerGroup.addLayer(line);
       }
       // Always add a dot at the surface location
@@ -1407,6 +1425,7 @@ function filterUnits() {
         pane: 'wellPane'
       });
       marker.bindTooltip(tooltip, { sticky: true });
+      if (clickHandler) marker.on('click', clickHandler);
       cincoWellLayerGroup.addLayer(marker);
     });
     if (!map.hasLayer(cincoWellLayerGroup)) cincoWellLayerGroup.addTo(map);
