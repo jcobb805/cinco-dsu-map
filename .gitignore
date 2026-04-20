@@ -1,0 +1,35 @@
+# Raw/intermediate Enverus fetches (use *_map_data.json versions)
+wells.json
+rigs.json
+permits.json
+wells_all.json
+wells_cherokee.json
+wells_cleveland.json
+wells_cottage_grove.json
+wells_oswego.json
+wells_red_fork.json
+wells_redfork_custer.json
+wells_skinner.json
+wells_tonkawa.json
+
+# BLM debug/test outputs
+blm_check.json
+blm_debug.json
+blm_layer2.json
+blm_spatial.json
+blm_test3.json
+blm_test_query.json
+blm_test_query2.json
+
+# One-time intermediates from diffing/rebuilding
+new_dsu_data.json
+new_section_nma.json
+unit_pivot_raw.csv
+
+# Old/superseded scripts
+fetch-enverus.py
+test-enverus.py
+
+# Legacy sheet exports (replaced by Excel workbook)
+sheet_sections.csv
+sheet_unit_pivot.csv
