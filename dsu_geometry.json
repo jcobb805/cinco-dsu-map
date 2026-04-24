@@ -1723,7 +1723,7 @@
       "wi": 0.039063,
       "nri": 0.029297,
       "operator": null,
-      "type": "Drillable",
+      "type": "Non-Op",
       "north": "30-13N-19W",
       "middle": "",
       "south": "31-13N-19W",
