@@ -1160,7 +1160,7 @@ function rigTooltip(r) {
 function addLateral(layerGroup, coords, color, dashed, tooltip, wellName) {
   var econ = (typeof WELL_ECON !== 'undefined' && wellName) ? WELL_ECON[wellName] : null;
   var clickHandler = econ ? function() {
-    window.open('https://jcobb805.github.io/cinco-analysis/run4.html?well=' + encodeURIComponent(econ.display), '_blank');
+    window.open('https://jcobb805.github.io/cinco-analysis/run11r.html?well=' + encodeURIComponent(econ.display), '_blank');
   } : null;
   if (coords.length === 2) {
     var line = L.polyline(coords, {
@@ -1363,7 +1363,7 @@ function filterUnits() {
           '<span style="color:#0969da;font-size:11px;">Click to open in Dashboard →</span>';
       }
       var clickHandler = econ ? function() {
-        window.open('https://jcobb805.github.io/cinco-analysis/run4.html?well=' + encodeURIComponent(econ.display), '_blank');
+        window.open('https://jcobb805.github.io/cinco-analysis/run11r.html?well=' + encodeURIComponent(econ.display), '_blank');
       } : null;
       // Look up bottom-hole coords from WELL_DATA/PERMIT_DATA for lateral rendering
       var wellMatch = WELL_DATA.find(function(w) { return w.n === cw.n; }) || PERMIT_DATA.find(function(p) { return p.n === cw.n; });
