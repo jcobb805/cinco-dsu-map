@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-24T16:45:56.238Z",
-  "as_of": "2026-04-24",
+  "generated_at": "2026-05-18T21:48:24.122Z",
+  "as_of": "2026-05-18",
   "entity": "Cinco Energy Partners",
   "source": "platform_energy DB (PostgreSQL)",
   "exclusions_applied": [
@@ -9,7 +9,7 @@
     "Kaiser Francis MU, LE-6/13/25",
     "Crawley & Reign- Spacing 10/31/25"
   ],
-  "unit_count": 72,
+  "unit_count": 73,
   "units": [
     {
       "unit": "1077",
@@ -33,7 +33,7 @@
       "comments": "Cherokee looks strong and given the depth and proximity to Quetzel etc.. should be very good. The Skinner section looks productive - would anticipate this to be very beneficial to the Cherokee or as a standalone target. The Red Fork also looks very good - thicker than 19N19W good - thicker package of net sand and likely higher GOR but it is present..and productive.. Cleveland also appears productive - has been tested and made gas.. NOTE: section is faulted in the southern most end of the 3 Mi unit.. Would drill from N to S along well control until fault encountered - steering line here would be very helpful - Given well control, this might be my FIRST unit to drill",
       "drillingCommentary": "Drill from N-S due to fault on southern end.. Steering line would greatly benefit this unit and adjacent unit",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1065",
@@ -57,7 +57,7 @@
       "comments": "Cherokee appears to be somewhat granite-washy.. BUT a surprisng ammount of OIL in the system... Appears to be a very good prospect IMO..Atoka is very deep, but surprisingly makes Oil - secondary system ?? CLEVELAND / COTTAGE GROVE interval looks VERY interesting.. Hot shales that apear to have storage and at depth of present Cherokee core... NEED GAS LOG",
       "drillingCommentary": null,
       "county": "WASHITA",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "851",
@@ -201,7 +201,7 @@
       "comments": "Cherokee appears to be somewhat granite-washy.. BUT a surprisng ammount of OIL in the system... Appears to be a very good prospect IMO..Atoka is very deep, but surprisingly makes Oil - secondary system ?? CLEVELAND / COTTAGE GROVE interval looks VERY interesting.. Hot shales that apear to have storage and at depth of present Cherokee core... NEED GAS LOG",
       "drillingCommentary": "Limited Control Drill from N-S into fault that mayexist on southern end",
       "county": "WASHITA",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1075",
@@ -225,7 +225,7 @@
       "comments": "Cherokee appears to be somewhat granite-washy.. but should be strong wells.. Red Fork is present and looks good - multiple landing points - Very likely Cherokee and Red Fork are both HIGH GOR given depth.. Atoka is very deep, but surprisingly makes Oil - secondary system ?? Cleveland is also present - need to explore further",
       "drillingCommentary": "Drill from S-N up-dip on well control",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "902",
@@ -249,7 +249,7 @@
       "comments": "Red Fork is thin but is present and productive, chasing a \"dirty Red Fork\" lookalike - analagous to the Hatcher Farms/Edna/4J farms etc...",
       "drillingCommentary": "Drill S-N on well control",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1072",
@@ -303,9 +303,9 @@
       "unit": "651",
       "alias": "Cinco 13",
       "universalId": "131706WU01",
-      "nma": 919.9907,
-      "wi": 0.718743,
-      "nri": 0.566206,
+      "nma": 960.0732,
+      "wi": 0.750057,
+      "nri": 0.591258,
       "operator": "CINCO",
       "type": "Drillable",
       "north": "6-13N-17W",
@@ -351,9 +351,9 @@
       "unit": "A26",
       "alias": "Cinco 15",
       "universalId": "141815WU01",
-      "nma": 383.8833,
-      "wi": 0.299909,
-      "nri": 0.240409,
+      "nma": 613.8833,
+      "wi": 0.479596,
+      "nri": 0.384159,
       "operator": "CINCO",
       "type": "Drillable",
       "north": "15-14N-18W",
@@ -393,7 +393,7 @@
       "comments": "Cherokee and Red Fork appear to be strong - very likely these are HIGH GOR targets - but should be prolific. Vertical tests show Red Fork to be gassy....VERY interesting unconventional signature in the CLEVELAND that looks like a Cherokee-type play... Need to examine further - well was DST'd in this CLVD section with \"show of gas\" - need to see MUDLOGS",
       "drillingCommentary": "Drill from S-N up-dip and into possible feature out of section on the north side",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1067",
@@ -417,7 +417,7 @@
       "comments": "Cherokee appears to be somewhat granite-washy.. BUT a surprisng ammount of OIL in the system... Appears to be a very good prospect IMO..Atoka is very deep, but surprisingly makes Oil - secondary system ?? CLEVELAND / COTTAGE GROVE interval looks VERY interesting.. Hot shales that apear to have storage and at depth of present Cherokee core... NEED GAS LOG",
       "drillingCommentary": "Limited Control Drill from N-S into fault that mayexist on southern end",
       "county": "WASHITA",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1085",
@@ -447,9 +447,9 @@
       "unit": "1076",
       "alias": "Cinco 19",
       "universalId": "121915WU01",
-      "nma": 320,
-      "wi": 0.25,
-      "nri": 0.1975,
+      "nma": 340,
+      "wi": 0.265625,
+      "nri": 0.21,
       "operator": "CINCO",
       "type": "Potential Drillable",
       "north": "15-12N-19W",
@@ -465,7 +465,7 @@
       "comments": "Cherokee and Red Fork appear to be strong - very likely these are HIGH GOR targets - but should be prolific. Vertical tests show Red Fork to be gassy....VERY interesting unconventional signature in the CLEVELAND that looks like a Cherokee-type play... Need to examine further - well was DST'd in this CLVD section with \"show of gas\" - need to see MUDLOGS",
       "drillingCommentary": "Drill from S-N up-dip and into possible feature out of section on the north side",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "640",
@@ -496,14 +496,14 @@
       "alias": "Cinco 21",
       "universalId": "141701WU01",
       "nma": 284.7219,
-      "wi": 0.148293,
-      "nri": 0.118634,
+      "wi": 0.222439,
+      "nri": 0.177951,
       "operator": "ANTHEM",
       "type": "Potential Drillable",
       "north": "1-14N-17W",
-      "middle": "12-14N-17W",
-      "south": "13-14N-17W",
-      "unitSize": 1920,
+      "middle": "",
+      "south": "12-14N-17W",
+      "unitSize": 1280,
       "primaryTarget": null,
       "secondaryTarget": null,
       "keyOffsets": null,
@@ -513,7 +513,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "4",
@@ -561,7 +561,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "11",
@@ -585,7 +585,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1078",
@@ -705,7 +705,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A31",
@@ -729,7 +729,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A36",
@@ -777,7 +777,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "573",
@@ -849,7 +849,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "45",
@@ -873,7 +873,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1145",
@@ -897,7 +897,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "28",
@@ -921,7 +921,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A34",
@@ -951,9 +951,9 @@
       "unit": "1083",
       "alias": "Cinco 40",
       "universalId": "141814WU01",
-      "nma": 70.7389,
-      "wi": 0.055265,
-      "nri": 0.044264,
+      "nma": 175.7389,
+      "wi": 0.137296,
+      "nri": 0.109889,
       "operator": "CINCO",
       "type": "Potential Drillable",
       "north": "14-14N-18W",
@@ -969,15 +969,15 @@
       "comments": "Red Fork is dirty/thin but analagous to the Hatcher / Illy sections. Limited data going to the south where it likely thins more. Cleveland looks strong and productive. The Cleveland is thin and likely T2, however, we are ~200' deeper than the TOPAZ (which had decent pressure ~6,000 PSI) and there is a decent looking dirty skinner package..",
       "drillingCommentary": "Limited Control in section would likely need to start with 14/23 drilling N-S",
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A15",
       "alias": "Cinco 41",
       "universalId": "141813WU01",
-      "nma": 131.121,
-      "wi": 0.102438,
-      "nri": 0.081013,
+      "nma": 151.121,
+      "wi": 0.118063,
+      "nri": 0.093513,
       "operator": "UNKNOWN",
       "type": "Non-Op",
       "north": "13-14N-18W",
@@ -1017,7 +1017,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A38",
@@ -1041,7 +1041,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "19",
@@ -1089,7 +1089,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A33",
@@ -1113,7 +1113,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "WASHITA",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "587",
@@ -1137,7 +1137,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A32",
@@ -1161,7 +1161,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1195",
@@ -1185,7 +1185,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "649",
@@ -1209,7 +1209,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "234",
@@ -1257,7 +1257,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "27",
@@ -1281,7 +1281,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "57",
@@ -1353,7 +1353,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "30",
@@ -1377,7 +1377,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "1312",
@@ -1401,7 +1401,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "708",
@@ -1425,15 +1425,15 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "715",
       "alias": "Cinco 62",
       "universalId": "131801WU01",
-      "nma": 95,
-      "wi": 0.074219,
-      "nri": 0.058262,
+      "nma": 135.165,
+      "wi": 0.105598,
+      "nri": 0.083365,
       "operator": "ANTHEM",
       "type": "Non-Op",
       "north": "1-13N-18W",
@@ -1449,7 +1449,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "64",
@@ -1473,7 +1473,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "Custer",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "650",
@@ -1521,7 +1521,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A1",
@@ -1545,7 +1545,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A27",
@@ -1593,7 +1593,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "ROGER MILLS",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "987",
@@ -1617,7 +1617,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "WASHITA",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "865",
@@ -1641,7 +1641,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A30",
@@ -1713,7 +1713,7 @@
       "comments": null,
       "drillingCommentary": null,
       "county": "CUSTER",
-      "idStatus": "provisional"
+      "idStatus": "confirmed"
     },
     {
       "unit": "A41",
@@ -1727,6 +1727,30 @@
       "north": "30-13N-19W",
       "middle": "",
       "south": "31-13N-19W",
+      "unitSize": 1280,
+      "primaryTarget": null,
+      "secondaryTarget": null,
+      "keyOffsets": null,
+      "cherokeeTier": null,
+      "redForkTier": null,
+      "rank": null,
+      "comments": null,
+      "drillingCommentary": null,
+      "county": "Custer",
+      "idStatus": "provisional"
+    },
+    {
+      "unit": "50",
+      "alias": "Cinco 76",
+      "universalId": "121906WU01",
+      "nma": 6.6667,
+      "wi": 0.005208,
+      "nri": 0.004167,
+      "operator": null,
+      "type": null,
+      "north": "6-12N-19W",
+      "middle": "",
+      "south": "7-12N-19W",
       "unitSize": 1280,
       "primaryTarget": null,
       "secondaryTarget": null,
