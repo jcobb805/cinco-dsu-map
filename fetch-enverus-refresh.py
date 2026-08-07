@@ -7,7 +7,7 @@ import os
 import re
 from enverus_developer_api import DeveloperAPIv3
 
-API_KEY = os.environ.get('ENVERUS_API_KEY', 'slPLsk0XM5a4tflOHW79H92eFfLri2CLfNw2GiZAbPcuQ.gKoOhMEKOCWRWRx7kw')
+API_KEY = os.environ.get('ENVERUS_API_KEY')
 v3 = DeveloperAPIv3(secret_key=API_KEY)
 
 COUNTIES = ['Custer', 'Roger Mills', 'Beckham', 'Washita', 'Dewey']
